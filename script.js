@@ -808,7 +808,20 @@ function renderCards(data) {
     
     let html = '<div class="cards-container">';
     
-    data.forEach((property, index) => {
+    data.forEach((property) => {
+        // إنشاء مفتاح فريد باستخدام مزيج من اسم الملف واسم العقار
+        const propertyKey = property['اسم الملف'] && property['اسم العقار'] ? 
+            `${property['اسم الملف']}_${property['اسم العقار']}` : 
+            property['اسم العقار'] || '';
+        
+        // البحث عن الفهرس الحقيقي في المصفوفة الرئيسية
+        const realIndex = properties.findIndex(p => {
+            const pKey = p['اسم الملف'] && p['اسم العقار'] ? 
+                `${p['اسم الملف']}_${p['اسم العقار']}` : 
+                p['اسم العقار'] || '';
+            return pKey === propertyKey;
+        });
+
         const status = calculateStatus(property);
         let headerClass = '';
         let badgeClass = '';
@@ -884,8 +897,8 @@ function renderCards(data) {
                 </div>
             </div>
             <div class="card-footer">
-                <button onclick="showPropertyDetails(${index})"><i class="fas fa-eye"></i> عرض التفاصيل</button>
-                <button onclick="showPrintOptions(${index})"><i class="fas fa-print"></i> طباعة</button>
+                <button onclick="showPropertyDetails(${realIndex})"><i class="fas fa-eye"></i> عرض التفاصيل</button>
+                <button onclick="showPrintOptions(${realIndex})"><i class="fas fa-print"></i> طباعة</button>
                 ${property['موقع العقار'] ? `<button onclick="openLocation('${property['موقع العقار']}')" class="location-btn"><i class="fas fa-map-marker-alt"></i> الموقع</button>` : ''}
             </div>
         </div>
