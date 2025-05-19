@@ -79,11 +79,11 @@ function initMobileMenu() {
     });
 }
 
-// عرض اختيار البلد
+// عرض اختيار المدينة
 function showCountrySelection() {
     const countries = getUniqueCountries();
     let html = '<div class="modal-overlay" style="display:flex;"><div class="modal-box"><button class="close-modal" onclick="closeModal()">×</button>';
-    html += '<h3>اختر البلد</h3><div class="country-selection">';
+    html += '<h3>اختر المدينة</h3><div class="country-selection">';
     
     countries.forEach(country => {
         html += `<button onclick="selectCountry('${country}'); closeModal();" class="${currentCountry === country ? 'active' : ''}">${country}</button>`;
@@ -166,8 +166,8 @@ function showViewToggle() {
 function initializeApp() {
     // معالجة الحالات الفارغة تلقائياً
     properties.forEach(property => {
-        // إذا كان اسم الملف أو المالك فارغ، اجعل الحالتين فارغتين
-        if (!property['اسم الملف'] || !property['المالك']) {
+        // إذا كان اسم المستأجر أو المالك فارغ، اجعل الحالتين فارغتين
+        if (!property['اسم المستأجر'] || !property['المالك']) {
             property['الحالة النهائية'] = '';
             property['الحالة الجديدة'] = '';
             return;
@@ -176,8 +176,8 @@ function initializeApp() {
         // إذا كانت الحالة النهائية أو الجديدة فارغة
         if (!property['الحالة النهائية'] || !property['الحالة الجديدة']) {
             const today = new Date();
-            // تحويل التاريخ من نص إلى كائن تاريخ
-            const endDateStr = property['تاريخ نهاية المدة'];
+            // تحويل تاريخ البداية من نص إلى كائن تاريخ
+            const endDateStr = property['تاريخ النهاية'];
             if (!endDateStr) {
                 property['الحالة النهائية'] = '';
                 property['الحالة الجديدة'] = '';
@@ -210,7 +210,7 @@ function initializeApp() {
         }
     });
 
-    // تهيئة أزرار البلدان
+    // تهيئة أزرار المدينةان
     initCountryButtons();
     
     // تهيئة قائمة العقارات
@@ -242,12 +242,12 @@ function initializeApp() {
     }
 }
 
-// الحصول على البلدان الفريدة
+// الحصول على المدينةان الفريدة
 function getUniqueCountries() {
     const countries = new Set();
     properties.forEach(property => {
-        if (property.البلد) {
-            countries.add(property.البلد);
+        if (property.المدينة) {
+            countries.add(property.المدينة);
         }
     });
     return ['الكل', ...Array.from(countries)];
@@ -264,7 +264,7 @@ function getUniqueProperties() {
     return Array.from(uniqueProperties);
 }
 
-// تهيئة أزرار البلدان
+// تهيئة أزرار المدينةان
 function initCountryButtons() {
     const countries = getUniqueCountries();
     const container = document.getElementById('countryButtons');
@@ -283,10 +283,10 @@ function initCountryButtons() {
 
 // تهيئة قائمة العقارات
 function initPropertyList(selectedCountry = null) {
-    // الحصول على العقارات حسب البلد المحدد
+    // الحصول على العقارات حسب المدينة المحدد
     let filteredProperties = properties;
     if (selectedCountry) {
-        filteredProperties = properties.filter(property => property.البلد === selectedCountry);
+        filteredProperties = properties.filter(property => property.المدينة === selectedCountry);
     }
     
     // استخراج أسماء العقارات الفريدة من العقارات المفلترة
@@ -312,7 +312,7 @@ function initPropertyList(selectedCountry = null) {
     if (propertyNames.length === 0) {
         const noProperties = document.createElement('div');
         noProperties.className = 'no-properties';
-        noProperties.textContent = 'لا توجد عقارات في هذا البلد';
+        noProperties.textContent = 'لا توجد عقارات في هذا المدينة';
         noProperties.style.textAlign = 'center';
         noProperties.style.padding = '1rem';
         noProperties.style.color = '#666';
@@ -367,7 +367,7 @@ function selectCountry(country) {
             currentCountry = country;
             currentProperty = null;
         } else {
-            // إذا تم الضغط على نفس البلد مرة أخرى أزل فلتر العقار فقط
+            // إذا تم الضغط على نفس المدينة مرة أخرى أزل فلتر العقار فقط
             currentProperty = null;
         }
     }
@@ -436,9 +436,9 @@ function renderData() {
     // تصفية البيانات
     let filteredData = properties;
     
-    // تصفية حسب البلد
+    // تصفية حسب المدينة
     if (currentCountry) {
-        filteredData = filteredData.filter(property => property.البلد === currentCountry);
+        filteredData = filteredData.filter(property => property.المدينة === currentCountry);
     }
     
     // تصفية حسب العقار
@@ -481,11 +481,11 @@ function renderData() {
 
 // تحديث عدادات القائمة المتنقلة
 function updateMobileMenuCounts(data) {
-    // عدد البلدان
+    // عدد المدينةان
     const countries = new Set();
     properties.forEach(property => {
-        if (property.البلد) {
-            countries.add(property.البلد);
+        if (property.المدينة) {
+            countries.add(property.المدينة);
         }
     });
     document.getElementById('countryCount').textContent = countries.size;
@@ -512,16 +512,16 @@ function renderTotals(data) {
     const container = document.getElementById('totalContainer');
     container.innerHTML = '';
 
-    // عدد الوحدات (إجمالي عدد الصفوف)
+    // عدد الوحدات (الاجمالى عدد الصفوف)
     const totalUnits = data.length;
     addTotalItem(container, 'عدد الوحدات', totalUnits);
 
     // عدد المستأجرين (فقط الذين لديهم ملفات)
-    const tenantsCount = data.filter(property => property['اسم الملف']?.trim()).length;
+    const tenantsCount = data.filter(property => property['اسم المستأجر']?.trim()).length;
     addTotalItem(container, 'عدد المستأجرين', tenantsCount);
 
     // عدّ الفارغ بناءً على عدم وجود اسم ملف
-    const emptyCount = data.filter(property => !property['اسم الملف'] || !property['المالك']).length;
+    const emptyCount = data.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
     
     // الجاري
     const activeCount = data.filter(property => {
@@ -549,8 +549,8 @@ function renderTotals(data) {
     
     // مبلغ تجاري (للنوع الضريبي)
     const commercialTotal = data.reduce((sum, property) => {
-        if (property['نوع الملف'] === 'ضريبي' && property['إجمالي'] && !isNaN(parseFloat(property['إجمالي']))) {
-            return sum + parseFloat(property['إجمالي']);
+        if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
@@ -558,16 +558,16 @@ function renderTotals(data) {
     
     // مبلغ سكني
     const residentialTotal = data.reduce((sum, property) => {
-        if (property['نوع الملف'] === 'سكني' && property['إجمالي'] && !isNaN(parseFloat(property['إجمالي']))) {
-            return sum + parseFloat(property['إجمالي']);
+        if (property['نوع العقد'] === 'سكني' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
     addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
     
-    // الإجمالي
+    // الالاجمالى
     const grandTotal = data.reduce((sum, property) => {
-        const value = property['إجمالي'];
+        const value = property['الاجمالى'];
         if (value && !isNaN(parseFloat(value))) {
             return sum + parseFloat(value);
         }
@@ -576,13 +576,13 @@ function renderTotals(data) {
     
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الإجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الالاجمالى:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
     container.appendChild(grandTotalItem);
     
     // إضافة معلومات الفلتر الحالي
     let filterInfo = '';
     if (currentCountry) {
-        filterInfo += `البلد: ${currentCountry} | `;
+        filterInfo += `المدينة: ${currentCountry} | `;
     }
     if (currentProperty) {
         filterInfo += `العقار: ${currentProperty} | `;
@@ -605,16 +605,16 @@ function renderMobileTotals(data) {
     const container = document.getElementById('mobileTotals');
     container.innerHTML = '';
 
-    // عدد الوحدات (إجمالي عدد الصفوف)
+    // عدد الوحدات (الاجمالى عدد الصفوف)
     const totalUnits = data.length;
     addTotalItem(container, 'عدد الوحدات', totalUnits);
 
     // عدد المستأجرين (فقط الذين لديهم ملفات)
-    const tenantsCount = data.filter(property => property['اسم الملف']?.trim()).length;
+    const tenantsCount = data.filter(property => property['اسم المستأجر']?.trim()).length;
     addTotalItem(container, 'عدد المستأجرين', tenantsCount);
 
     // عدّ الفارغ بناءً على عدم وجود اسم ملف
-    const emptyCount = data.filter(property => !property['اسم الملف'] || !property['المالك']).length;
+    const emptyCount = data.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
     
     // الجاري
     const activeCount = data.filter(property => {
@@ -642,8 +642,8 @@ function renderMobileTotals(data) {
     
     // مبلغ تجاري (للنوع الضريبي)
     const commercialTotal = data.reduce((sum, property) => {
-        if (property['نوع الملف'] === 'ضريبي' && property['إجمالي'] && !isNaN(parseFloat(property['إجمالي']))) {
-            return sum + parseFloat(property['إجمالي']);
+        if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
@@ -651,16 +651,16 @@ function renderMobileTotals(data) {
     
     // مبلغ سكني
     const residentialTotal = data.reduce((sum, property) => {
-        if (property['نوع الملف'] === 'سكني' && property['إجمالي'] && !isNaN(parseFloat(property['إجمالي']))) {
-            return sum + parseFloat(property['إجمالي']);
+        if (property['نوع العقد'] === 'سكني' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
     addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
     
-    // الإجمالي
+    // الالاجمالى
     const grandTotal = data.reduce((sum, property) => {
-        const value = property['إجمالي'];
+        const value = property['الاجمالى'];
         if (value && !isNaN(parseFloat(value))) {
             return sum + parseFloat(value);
         }
@@ -669,13 +669,13 @@ function renderMobileTotals(data) {
     
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الإجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الالاجمالى:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
     container.appendChild(grandTotalItem);
     
     // إضافة معلومات الفلتر الحالي للجوال
     let filterInfo = '';
     if (currentCountry) {
-        filterInfo += `البلد: ${currentCountry} | `;
+        filterInfo += `المدينة: ${currentCountry} | `;
     }
     if (currentProperty) {
         filterInfo += `العقار: ${currentProperty} | `;
@@ -703,8 +703,8 @@ function addTotalItem(container, label, value) {
 
 // حساب حالة العقار
 function calculateStatus(property) {
-    // إذا كان اسم الملف أو المالك فارغ، اعتبره فارغ
-    if (!property['اسم الملف'] || !property['المالك']) {
+    // إذا كان اسم المستأجر أو المالك فارغ، اعتبره فارغ
+    if (!property['اسم المستأجر'] || !property['المالك']) {
         return { 
             final: 'فارغ',
             display: 'فارغ'
@@ -733,57 +733,58 @@ function renderTable(data) {
     
     let html = '<div class="table-container"><table>';
     
-    // رؤوس الأعمدة - إضافة جميع الحقول الممكنة
-    html += '<tr>';
-    const headers = [
+    // ترتيب الأعمدة كما هو مطلوب
+    const orderedFields = [
+        'رقم الوحدة ',  // لاحظ المسافة في نهاية الاسم كما هو في ملف JSON
         'اسم العقار',
-        'اسم الملف',
-        'المالك',
-        'نوع الملف',
+        'المدينة',
+        'رقم الصك',
+        'المساحة',
+        'الارتفاع',
+        'رقم عداد الكهرباء',
+        'اسم المستأجر',
         'رقم العقد',
-        'التاريخ',
-        'تاريخ نهاية المدة',
+        'نوع العقد',
+        'تاريخ البداية',
+        'تاريخ النهاية',
+        'المالك',
         'الحالة',
-        'إجمالي',
-        'البلد',
-        'موقع العقار',
-        'Column1'
+        'الاجمالى',
+        'موقع العقار'
     ];
     
-    headers.forEach(header => {
-        if (header !== 'Column1') { // استبعاد الحقول غير المهمة
-            html += `<th>${header}</th>`;
-        }
+    // إضافة رؤوس الأعمدة
+    html += '<tr>';
+    orderedFields.forEach(header => {
+        html += `<th>${header}</th>`;
     });
-    html += '<th>الإجراءات</th>'; // إضافة عمود للإجراءات
+    html += '<th>الإجراءات</th>';
     html += '</tr>';
     
     // بيانات الصفوف
     data.forEach((property, index) => {
         const status = calculateStatus(property);
         let statusClass = '';
-        if (status.final === 'جاري') {
-            statusClass = 'active-status';
-        } else if (status.final === 'منتهى') {
-            statusClass = 'expired-status';
-        } else if (status.final === 'على وشك') {
-            statusClass = 'pending-status';
-        }
+        if (status.final === 'جاري') statusClass = 'active-status';
+        else if (status.final === 'منتهى') statusClass = 'expired-status';
+        else if (status.final === 'على وشك') statusClass = 'pending-status';
+        else if (status.final === 'فارغ') statusClass = 'empty-status';
         
         html += '<tr>';
-        html += `<td>${property['اسم العقار'] || ''}</td>`;
-        html += `<td>${property['اسم الملف'] || ''}</td>`;
-        html += `<td>${property['المالك'] || ''}</td>`;
-        html += `<td>${property['نوع الملف'] || ''}</td>`;
-        html += `<td>${property['رقم العقد'] || ''}</td>`;
-        html += `<td>${property['التاريخ'] || ''}</td>`;
-        html += `<td>${property['تاريخ نهاية المدة'] || ''}</td>`;
-        html += `<td class="${statusClass}">${status.display || ''}</td>`;
-        html += `<td>${property['إجمالي'] ? parseFloat(property['إجمالي']).toLocaleString() : ''}</td>`;
-        html += `<td>${property['البلد'] || ''}</td>`;
-        html += `<td>${property['موقع العقار'] || ''}</td>`;
         
-        // إضافة أزرار الإجراءات
+        orderedFields.forEach(field => {
+            if (field === 'الحالة') {
+                html += `<td class="${statusClass}">${status.display || ''}</td>`;
+            } else if (field === 'الاجمالى') {
+                html += `<td>${property[field] ? parseFloat(property[field]).toLocaleString() + ' ريال' : ''}</td>`;
+            } else if (field === 'موقع العقار' && property[field]) {
+                html += `<td><a href="#" onclick="openLocation('${property[field]}'); return false;" class="location-link">${property[field]} <i class="fas fa-external-link-alt"></i></a></td>`;
+            } else {
+                html += `<td>${property[field] || ''}</td>`;
+            }
+        });
+        
+        // أزرار الإجراءات
         html += `<td>
             <button onclick="showPropertyDetails(${index})" class="table-action-btn"><i class="fas fa-eye"></i></button>
             <button onclick="showPrintOptions(${index})" class="table-action-btn"><i class="fas fa-print"></i></button>
@@ -809,15 +810,15 @@ function renderCards(data) {
     let html = '<div class="cards-container">';
     
     data.forEach((property) => {
-        // إنشاء مفتاح فريد باستخدام مزيج من اسم الملف واسم العقار
-        const propertyKey = property['اسم الملف'] && property['اسم العقار'] ? 
-            `${property['اسم الملف']}_${property['اسم العقار']}` : 
+        // إنشاء مفتاح فريد باستخدام مزيج من اسم المستأجر واسم العقار
+        const propertyKey = property['اسم المستأجر'] && property['اسم العقار'] ? 
+            `${property['اسم المستأجر']}_${property['اسم العقار']}` : 
             property['اسم العقار'] || '';
         
         // البحث عن الفهرس الحقيقي في المصفوفة الرئيسية
         const realIndex = properties.findIndex(p => {
-            const pKey = p['اسم الملف'] && p['اسم العقار'] ? 
-                `${p['اسم الملف']}_${p['اسم العقار']}` : 
+            const pKey = p['اسم المستأجر'] && p['اسم العقار'] ? 
+                `${p['اسم المستأجر']}_${p['اسم العقار']}` : 
                 p['اسم العقار'] || '';
             return pKey === propertyKey;
         });
@@ -845,37 +846,57 @@ function renderCards(data) {
             badgeClass = 'empty-badge';
             badgeIcon = '<i class="fas fa-minus-circle"></i>';
         }
+
+        // ألوان تفاعلية للتواريخ حسب الحالة
+        let startColor = '', endColor = '';
+        if (status.final === 'جاري') {
+            startColor = 'background:#e8f7ef;color:#2a4b9b;';
+            endColor = 'background:#e8f7ef;color:#2a4b9b;';
+        } else if (status.final === 'منتهى') {
+            startColor = 'background:#fbeee6;color:#e74c3c;';
+            endColor = 'background:#fbeee6;color:#e74c3c;';
+        } else if (status.final === 'على وشك') {
+            startColor = 'background:#fffbe6;color:#f39c12;';
+            endColor = 'background:#fffbe6;color:#f39c12;';
+        } else {
+            startColor = 'background:#f6f6f6;color:#333;';
+            endColor = 'background:#f6f6f6;color:#333;';
+        }
         
         html += `
         <div class="property-card">
             <div class="card-header ${headerClass}">
                 <span>${property['اسم العقار'] || ''}</span>
-                <span>${property['نوع الملف'] || ''}</span>
+                <span>${property['نوع العقد'] || ''}</span>
             </div>
             <div class="card-body">
                 <div class="card-row">
-                    <span class="card-label">اسم الملف:</span>
-                    <span class="card-value">${property['اسم الملف'] || ''}</span>
+                    <span class="card-label">اسم المستأجر:</span>
+                    <span class="card-value">${property['اسم المستأجر'] || ''}</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">رقم الوحدة:</span>
+                    <span class="card-value">${property['رقم الوحدة '] || ''}</span>
                 </div>
                 <div class="card-row">
                     <span class="card-label">المالك:</span>
                     <span class="card-value">${property['المالك'] || ''}</span>
                 </div>
                 <div class="card-row">
-                    <span class="card-label">نوع الملف:</span>
-                    <span class="card-value">${property['نوع الملف'] || ''}</span>
+                    <span class="card-label">نوع العقد:</span>
+                    <span class="card-value">${property['نوع العقد'] || ''}</span>
                 </div>
                 <div class="card-row">
                     <span class="card-label">رقم العقد:</span>
                     <span class="card-value">${property['رقم العقد'] || ''}</span>
                 </div>
                 <div class="card-row">
-                    <span class="card-label">التاريخ:</span>
-                    <span class="card-value">${property['التاريخ'] || ''}</span>
+                    <span class="card-label">تاريخ البداية:</span>
+                    <span class="card-value" style="${startColor} padding:4px 8px; border-radius:4px;">${property['تاريخ البداية'] || ''}</span>
                 </div>
                 <div class="card-row">
-                    <span class="card-label">تاريخ نهاية المدة:</span>
-                    <span class="card-value">${property['تاريخ نهاية المدة'] || ''}</span>
+                    <span class="card-label">تاريخ النهاية:</span>
+                    <span class="card-value" style="${endColor} padding:4px 8px; border-radius:4px;">${property['تاريخ النهاية'] || ''}</span>
                 </div>
                 <div class="card-row">
                     <span class="card-label">حالة الوحدة:</span>
@@ -884,12 +905,12 @@ function renderCards(data) {
                     </span>
                 </div>
                 <div class="card-row">
-                    <span class="card-label">إجمالي:</span>
-                    <span class="card-value">${property['إجمالي'] ? parseFloat(property['إجمالي']).toLocaleString() + ' ريال' : ''}</span>
+                    <span class="card-label">الاجمالى:</span>
+                    <span class="card-value">${property['الاجمالى'] ? parseFloat(property['الاجمالى']).toLocaleString() + ' ريال' : ''}</span>
                 </div>
                 <div class="card-row">
-                    <span class="card-label">البلد:</span>
-                    <span class="card-value">${property['البلد'] || ''}</span>
+                    <span class="card-label">المدينة:</span>
+                    <span class="card-value">${property['المدينة'] || ''}</span>
                 </div>
                 <div class="card-row">
                     <span class="card-label">موقع العقار:</span>
@@ -950,7 +971,7 @@ function showPropertyDetails(index) {
         if (key === 'Column1') return; // تخطي الحقول غير المهمة
         
         let displayValue = value;
-        if (key === 'إجمالي' && value) {
+        if (key === 'الاجمالى' && value) {
             displayValue = parseFloat(value).toLocaleString() + ' ريال';
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
             return; // تخطي حقول الحالة لأننا سنعرضها بشكل مخصص
@@ -1083,7 +1104,7 @@ function printProperty(index) {
         
         let displayValue = value;
         
-        if (key === 'إجمالي' && value) {
+        if (key === 'الاجمالى' && value) {
             displayValue = parseFloat(value).toLocaleString() + ' ريال';
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
             return; // تخطي حقول الحالة لأننا سنعرضها بشكل مخصص
@@ -1287,7 +1308,7 @@ function executePrint(index) {
         
         let displayValue = property[key];
         
-        if (key === 'إجمالي' && displayValue) {
+        if (key === 'الاجمالى' && displayValue) {
             displayValue = parseFloat(displayValue).toLocaleString() + ' ريال';
         } else if (key === 'موقع العقار' && displayValue) {
             const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(displayValue)}`;
