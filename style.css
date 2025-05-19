@@ -648,7 +648,7 @@ tr:hover {
     color: #333;
 }
 
-.card-row:has(.card-label:contains("إجمالي")) .card-value {
+.card-row:has(.card-label:contains("الاجمالى")) .card-value {
     color: var(--primary-color);
     font-weight: bold;
     font-size: 1.1rem;
