@@ -1686,3 +1686,112 @@ function showMeterDetails(meterNumber, propertyName, contractNumber) {
         if (e.target === this) closeModal();
     });
 }
+
+// تصدير إلى Excel
+function exportToExcel() {
+    // تحضير البيانات المفلترة الحالية
+    const filteredData = getFilteredData();
+    
+    // تحويل البيانات إلى تنسيق مناسب للتصدير
+    const headers = [
+        'رقم الوحدة',
+        'اسم العقار',
+        'المدينة',
+        'رقم الصك',
+        'المساحة',
+        'رقم عداد الكهرباء',
+        'اسم المستأجر',
+        'رقم العقد',
+        'نوع العقد',
+        'تاريخ البداية',
+        'تاريخ النهاية',
+        'المالك',
+        'الحالة',
+        'الاجمالى'
+    ];
+
+    // تجميع البيانات بنفس ترتيب العناوين
+    const rows = filteredData.map(item => {
+        const status = calculateStatus(item);
+        return [
+            item['رقم الوحدة '] || '',
+            item['اسم العقار'] || '',
+            item['المدينة'] || '',
+            item['رقم الصك'] || '',
+            item['المساحة'] || '',
+            item['رقم عداد الكهرباء'] || '',
+            item['اسم المستأجر'] || '',
+            item['رقم العقد'] || '',
+            item['نوع العقد'] || '',
+            item['تاريخ البداية'] || '',
+            item['تاريخ النهاية'] || '',
+            item['المالك'] || '',
+            status.display || '',
+            item['الاجمالى'] ? Number(item['الاجمالى']).toLocaleString() : ''
+        ];
+    });
+
+    // إنشاء محتوى ملف Excel
+    let csvContent = '\ufeff'; // BOM للدعم العربي
+    
+    // إضافة العناوين
+    csvContent += headers.join(',') + '\n';
+    
+    // إضافة الصفوف
+    rows.forEach(row => {
+        csvContent += row.map(cell => {
+            // معالجة الخلايا التي تحتوي على فواصل
+            if (cell && cell.toString().includes(',')) {
+                return `"${cell}"`;
+            }
+            return cell;
+        }).join(',') + '\n';
+    });
+
+    // إنشاء ملف للتحميل
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // تحضير اسم الملف مع التاريخ الحالي
+    const date = new Date().toLocaleDateString('ar-SA').replace(/\//g, '-');
+    const filename = `تقرير_العقارات_${date}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// دالة مساعدة للحصول على البيانات المفلترة
+function getFilteredData() {
+    let data = properties;
+    
+    // تطبيق الفلاتر الحالية
+    if (currentCountry) {
+        data = data.filter(p => p.المدينة === currentCountry);
+    }
+    if (currentProperty) {
+        data = data.filter(p => p['اسم العقار'] === currentProperty);
+    }
+    if (filterStatus) {
+        data = data.filter(p => {
+            const status = calculateStatus(p);
+            return status.final === filterStatus;
+        });
+    }
+    
+    // تطبيق فلتر البحث العام
+    const searchTerm = document.getElementById('globalSearch').value.toLowerCase();
+    if (searchTerm) {
+        data = data.filter(property => {
+            return Object.values(property).some(value => 
+                value && value.toString().toLowerCase().includes(searchTerm)
+            );
+        });
+    }
+    
+    return data;
+}
