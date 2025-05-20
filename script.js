@@ -512,9 +512,9 @@ function renderTotals(data) {
     const container = document.getElementById('totalContainer');
     container.innerHTML = '';
 
-    // عدد الوحدات (الاجمالى عدد الصفوف)
+    // جميع العمليات الحالية...
     const totalUnits = data.length;
-    addTotalItem(container, 'عدد الوحدات', totalUnits);
+    addTotalItem(container, 'عدد الوحدات', totalUnits, 'units-stat');
 
     // تجميع العقود الفريدة حسب رقم العقد واسم العقار
     const uniqueContracts = {};
@@ -526,9 +526,24 @@ function renderTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    // عدد المستأجرين الفريدين (كل عقد واحد فقط)
+    // جمع مساحة الصك من uniqueList
+    const totalDeedArea = uniqueList.reduce((sum, property) => {
+        const deedArea = property['مساحةالصك'];
+        if (deedArea && !isNaN(parseFloat(deedArea))) {
+            return sum + parseFloat(deedArea);
+        }
+        return sum;
+    }, 0);
+
+    // رقم الصك الفريد الأول
+    const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
+    if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
+        addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
+    }
+
+    // باقي الإحصائيات كما هي...
     const tenantsCount = uniqueList.filter(p => p['اسم المستأجر']).length;
-    addTotalItem(container, 'عدد المستأجرين', tenantsCount);
+    addTotalItem(container, 'عدد المستأجرين', tenantsCount, 'tenants-stat');
 
     // عدّ الفارغ بناءً على عدم وجود اسم مستأجر أو مالك (مرة واحدة لكل عقد)
     const emptyCount = uniqueList.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
@@ -538,24 +553,24 @@ function renderTotals(data) {
         const status = calculateStatus(property);
         return status.final === 'جاري';
     }).length;
-    addTotalItem(container, 'الجاري', activeCount);
+    addTotalItem(container, 'الجاري', activeCount, 'active-stat');
 
     // المنتهي
     const expiredCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'منتهى';
     }).length;
-    addTotalItem(container, 'المنتهي', expiredCount);
+    addTotalItem(container, 'المنتهي', expiredCount, 'expired-stat');
 
     // الفارغ
-    addTotalItem(container, 'الفارغ', emptyCount);
+    addTotalItem(container, 'الفارغ', emptyCount, 'empty-stat');
 
     // على وشك
     const pendingCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'على وشك';
     }).length;
-    addTotalItem(container, 'على وشك', pendingCount);
+    addTotalItem(container, 'على وشك', pendingCount, 'pending-stat');
 
     // مبلغ تجاري (للنوع الضريبي)
     const commercialTotal = uniqueList.reduce((sum, property) => {
@@ -575,7 +590,7 @@ function renderTotals(data) {
     }, 0);
     addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
 
-    // الالاجمالى
+    // الاجمالي
     const grandTotal = uniqueList.reduce((sum, property) => {
         const value = property['الاجمالى'];
         if (value && !isNaN(parseFloat(value))) {
@@ -586,7 +601,7 @@ function renderTotals(data) {
 
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الالاجمالى:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
     container.appendChild(grandTotalItem);
 
     // إضافة معلومات الفلتر الحالي
@@ -609,7 +624,7 @@ function renderMobileTotals(data) {
     container.innerHTML = '';
 
     const totalUnits = data.length;
-    addTotalItem(container, 'عدد الوحدات', totalUnits);
+    addTotalItem(container, 'عدد الوحدات', totalUnits, 'units-stat');
 
     const uniqueContracts = {};
     data.forEach(property => {
@@ -620,31 +635,44 @@ function renderMobileTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    const tenantsCount = uniqueList.filter(p => p['اسم المستأجر']).length;
-    addTotalItem(container, 'عدد المستأجرين', tenantsCount);
+    // رقم الصك الفريد الأول
+    const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
+    if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
+        addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
+    }
 
+    // باقي الإحصائيات كما هي...
+    const tenantsCount = uniqueList.filter(p => p['اسم المستأجر']).length;
+    addTotalItem(container, 'عدد المستأجرين', tenantsCount, 'tenants-stat');
+
+    // عدّ الفارغ بناءً على عدم وجود اسم مستأجر أو مالك (مرة واحدة لكل عقد)
     const emptyCount = uniqueList.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
 
+    // الجاري
     const activeCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'جاري';
     }).length;
-    addTotalItem(container, 'الجاري', activeCount);
+    addTotalItem(container, 'الجاري', activeCount, 'active-stat');
 
+    // المنتهي
     const expiredCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'منتهى';
     }).length;
-    addTotalItem(container, 'المنتهي', expiredCount);
+    addTotalItem(container, 'المنتهي', expiredCount, 'expired-stat');
 
-    addTotalItem(container, 'الفارغ', emptyCount);
+    // الفارغ
+    addTotalItem(container, 'الفارغ', emptyCount, 'empty-stat');
 
+    // على وشك
     const pendingCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'على وشك';
     }).length;
-    addTotalItem(container, 'على وشك', pendingCount);
+    addTotalItem(container, 'على وشك', pendingCount, 'pending-stat');
 
+    // مبلغ تجاري (للنوع الضريبي)
     const commercialTotal = uniqueList.reduce((sum, property) => {
         if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
             return sum + parseFloat(property['الاجمالى']);
@@ -653,6 +681,7 @@ function renderMobileTotals(data) {
     }, 0);
     addTotalItem(container, 'مبلغ تجاري', commercialTotal.toLocaleString() + ' ريال');
 
+    // مبلغ سكني
     const residentialTotal = uniqueList.reduce((sum, property) => {
         if (property['نوع العقد'] === 'سكني' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
             return sum + parseFloat(property['الاجمالى']);
@@ -661,6 +690,7 @@ function renderMobileTotals(data) {
     }, 0);
     addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
 
+    // الاجمالي
     const grandTotal = uniqueList.reduce((sum, property) => {
         const value = property['الاجمالى'];
         if (value && !isNaN(parseFloat(value))) {
@@ -671,10 +701,10 @@ function renderMobileTotals(data) {
 
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الالاجمالى:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
     container.appendChild(grandTotalItem);
 
-    // إضافة معلومات الفلتر الحالي للجوال
+    // إضافة معلومات الفلتر الحالي
     let filterInfo = '';
     if (currentCountry) filterInfo += `المدينة: ${currentCountry} | `;
     if (currentProperty) filterInfo += `العقار: ${currentProperty} | `;
@@ -682,16 +712,16 @@ function renderMobileTotals(data) {
     if (filterInfo) {
         filterInfo = filterInfo.slice(0, -3);
         const filterInfoItem = document.createElement('div');
-        filterInfoItem.className = 'filter-info mobile-filter-info';
+        filterInfoItem.className = 'filter-info';
         filterInfoItem.innerHTML = `<span>الفلتر الحالي: ${filterInfo}</span>`;
         container.appendChild(filterInfoItem);
     }
 }
 
 // إضافة عنصر إحصائي
-function addTotalItem(container, label, value) {
+function addTotalItem(container, label, value, extraClass = '') {
     const item = document.createElement('div');
-    item.className = 'total-item';
+    item.className = 'total-item' + (extraClass ? ' ' + extraClass : '');
     item.innerHTML = `<span class="total-label">${label}:</span> <span class="total-value">${value}</span>`;
     container.appendChild(item);
 }
@@ -720,7 +750,6 @@ function calculateStatus(property) {
 // عرض البيانات في جدول
 function renderTable(data) {
     const container = document.getElementById('content');
-    
     if (data.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 2rem;">لا توجد بيانات</div>';
         return;
@@ -734,20 +763,23 @@ function renderTable(data) {
             groupedData[key] = {
                 ...property,
                 units: [property['رقم الوحدة ']],
+                meters: [property['رقم عداد الكهرباء']], // إضافة مصفوفة لأرقام العدادات
                 totalUnits: 1,
-                // نأخذ المبلغ مرة واحدة فقط
-                الاجمالى: property['الاجمالى']
+                الاجمالى: property['الاجمالى'],
+                totalArea: parseFloat(property['المساحة']) || 0
             };
         } else {
             groupedData[key].units.push(property['رقم الوحدة ']);
+            // إضافة رقم العداد إذا كان موجوداً ولم يكن مكرراً
+            if (property['رقم عداد الكهرباء'] && !groupedData[key].meters.includes(property['رقم عداد الكهرباء'])) {
+                groupedData[key].meters.push(property['رقم عداد الكهرباء']);
+            }
             groupedData[key].totalUnits++;
-            // لا نقوم بجمع المبالغ
+            groupedData[key].totalArea += parseFloat(property['المساحة']) || 0;
         }
     });
 
     let html = '<div class="table-container"><table>';
-    
-    // ترتيب الأعمدة
     const orderedFields = [
         'رقم الوحدة ',
         'اسم العقار',
@@ -766,7 +798,8 @@ function renderTable(data) {
         'الاجمالى',
         'موقع العقار'
     ];
-    
+    // لاحظ أننا لم نضف 'مساحة الصك' إلى القائمة
+
     // رؤوس الأعمدة
     html += '<tr>';
     orderedFields.forEach(header => {
@@ -774,8 +807,7 @@ function renderTable(data) {
     });
     html += '<th>الإجراءات</th>';
     html += '</tr>';
-    
-    // عرض البيانات المجمعة
+
     Object.values(groupedData).forEach((property, index) => {
         const status = calculateStatus(property);
         let statusClass = '';
@@ -783,19 +815,20 @@ function renderTable(data) {
         else if (status.final === 'منتهى') statusClass = 'expired-status';
         else if (status.final === 'على وشك') statusClass = 'pending-status';
         else if (status.final === 'فارغ') statusClass = 'empty-status';
-        
+
         html += '<tr>';
-        
         orderedFields.forEach(field => {
             if (field === 'رقم الوحدة ') {
-                // عرض أرقام الوحدات المجمعة
-                const unitsDisplay = property.totalUnits > 1 ? 
-                    `<div class="multiple-units">
-                        ${property.units.join(' , ')}
-                        <span class="units-count">(${property.totalUnits} وحدات)</span>
-                     </div>` :
-                    property.units[0] || '';
+                const unitsDisplay = property.units.join(' , ') +
+                    (property.totalUnits > 1 ? `<span class="units-count"> (${property.totalUnits} وحدات)</span>` : '');
                 html += `<td>${unitsDisplay}</td>`;
+            } else if (field === 'رقم عداد الكهرباء') {
+                const metersDisplay = property.meters.filter(Boolean).map(meter => 
+                    `<span class="meter-link" onclick="showMeterDetails('${meter}', '${property['اسم العقار']}', '${property['رقم العقد']}')">${meter}</span>`
+                ).join(' , ');
+                html += `<td>${metersDisplay}</td>`;
+            } else if (field === 'المساحة') {
+                html += `<td>${property.totalArea ? property.totalArea.toLocaleString() : ''}</td>`;
             } else if (field === 'الحالة') {
                 html += `<td class="${statusClass}">${status.display || ''}</td>`;
             } else if (field === 'الاجمالى') {
@@ -809,14 +842,15 @@ function renderTable(data) {
         
         // أزرار الإجراءات
         html += `<td>
-            <button onclick="showPropertyDetails(${index})" class="table-action-btn"><i class="fas fa-eye"></i></button>
-            <button onclick="showPrintOptions(${index})" class="table-action-btn"><i class="fas fa-print"></i></button>
+            <button onclick="showPropertyDetailsByKey('${property['رقم العقد']}', '${property['اسم العقار']}')">
+                <i class="fas fa-eye"></i> عرض التفاصيل
+            </button>
+            <button onclick="showPrintOptions('${property['رقم العقد']}', '${property['اسم العقار']}')" class="table-action-btn"><i class="fas fa-print"></i></button>
             ${property['موقع العقار'] ? `<button onclick="openLocation('${property['موقع العقار']}')" class="table-action-btn"><i class="fas fa-map-marker-alt"></i></button>` : ''}
         </td>`;
-        
         html += '</tr>';
     });
-    
+
     html += '</table></div>';
     container.innerHTML = html;
 }
@@ -830,7 +864,6 @@ function renderCards(data) {
         return;
     }
 
-    // تجميع البيانات حسب رقم العقد واسم العقار
     const groupedData = {};
     data.forEach(property => {
         const key = `${property['رقم العقد']}_${property['اسم العقار']}`;
@@ -838,20 +871,24 @@ function renderCards(data) {
             groupedData[key] = {
                 ...property,
                 units: [property['رقم الوحدة ']],
+                meters: [property['رقم عداد الكهرباء']], // إضافة مصفوفة لأرقام العدادات
                 totalUnits: 1,
-                // نأخذ المبلغ مرة واحدة فقط
-                الاجمالى: property['الاجمالى']
+                الاجمالى: property['الاجمالى'],
+                totalArea: parseFloat(property['المساحة']) || 0
             };
         } else {
             groupedData[key].units.push(property['رقم الوحدة ']);
+            // إضافة رقم العداد إذا كان موجوداً ولم يكن مكرراً
+            if (property['رقم عداد الكهرباء'] && !groupedData[key].meters.includes(property['رقم عداد الكهرباء'])) {
+                groupedData[key].meters.push(property['رقم عداد الكهرباء']);
+            }
             groupedData[key].totalUnits++;
-            // لا نقوم بجمع المبالغ
+            groupedData[key].totalArea += parseFloat(property['المساحة']) || 0;
         }
     });
     
-    // تعديل عرض البطاقة ليستخدم المبلغ الأصلي بدون جمع
     let html = '<div class="cards-container">';
-    Object.values(groupedData).forEach((property, index) => {
+    Object.values(groupedData).forEach((property) => {  // حذف index من البارامترات
         const status = calculateStatus(property);
         let headerClass = '';
         let badgeClass = '';
@@ -911,12 +948,26 @@ function renderCards(data) {
                 <div class="card-row">
                     <span class="card-label">رقم الوحدة:</span>
                     <span class="card-value multiple-units">
-                        ${property.units.join(' , ')}
-                        ${property.totalUnits > 1 ? 
-                            `<span class="units-count">(${property.totalUnits} وحدات)</span>` : 
-                            ''}
+                        ${property.units.map(unit => `
+                            <span class="unit-link" onclick="showUnitDetails('${unit}', '${property['اسم العقار']}', '${property['رقم العقد']}')">${unit}</span>
+                        `).join(' , ')}
+                        ${property.totalUnits > 1 ? `<span class="units-count"> (${property.totalUnits} وحدات)</span>` : ''}
                     </span>
                 </div>
+                <div class="card-row">
+                    <span class="card-label">المساحة:</span>
+                    <span class="card-value">${property.totalArea ? property.totalArea.toLocaleString() : ''}</span>
+                </div>
+                ${property['رقم عداد الكهرباء'] ? `
+                <div class="card-row electric-meter-row">
+                    <span class="card-label"><i class="fas fa-bolt"></i> رقم عداد الكهرباء:</span>
+                    <span class="card-value multiple-meters">
+                        ${property.meters.filter(Boolean).map(meter => `
+                            <span class="meter-link" onclick="showMeterDetails('${meter}', '${property['اسم العقار']}', '${property['رقم العقد']}')">${meter}</span>
+                        `).join(' , ')}
+                        ${property.meters.length > 1 ? `<span class="meters-count">(${property.meters.length} عدادات)</span>` : ''}
+                    </span>
+                </div>` : ''}
                 <div class="card-row">
                     <span class="card-label">اسم المستأجر:</span>
                     <span class="card-value">${property['اسم المستأجر'] || ''}</span>
@@ -957,10 +1008,10 @@ function renderCards(data) {
                 </div>
             </div>
             <div class="card-footer">
-                <button onclick="showPropertyDetails(${index})">
+                <button onclick="showPropertyDetailsByKey('${property['رقم العقد']}', '${property['اسم العقار']}')">
                     <i class="fas fa-eye"></i> عرض التفاصيل
                 </button>
-                <button onclick="showPrintOptions(${index})">
+                <button onclick="showPrintOptions('${property['رقم العقد']}', '${property['اسم العقار']}')">
                     <i class="fas fa-print"></i> طباعة
                 </button>
                 ${property['موقع العقار'] ? 
@@ -1007,24 +1058,46 @@ function showPropertyDetails(index) {
         statusClass = 'pending-status';
         badgeIcon = '<i class="fas fa-exclamation-circle"></i>';
     }
-    
+
+    // تجميع الوحدات والمساحة لنفس العقد
+    const contractKey = `${property['رقم العقد']}_${property['اسم العقار']}`;
+    const related = properties.filter(
+        p => `${p['رقم العقد']}_${p['اسم العقار']}` === contractKey
+    );
+    const allUnits = related.map(p => p['رقم الوحدة ']).filter(Boolean);
+    const totalArea = related.reduce((sum, p) => sum + (parseFloat(p['المساحة']) || 0), 0);
+
     let html = '<div class="modal-overlay" style="display:flex;"><div class="modal-box"><button class="close-modal" onclick="closeModal()">×</button>';
     html += `<h3>${property['اسم العقار'] || ''}</h3>`;
     html += '<div class="property-details">';
-    
-    // إضافة جميع الحقول
+
+    // رقم الوحدة (جميع الوحدات)
+    html += `
+    <div class="detail-row">
+        <span class="detail-label">رقم الوحدة:</span>
+        <span class="detail-value">${allUnits.join(' , ')}${allUnits.length > 1 ? ` <span class="units-count">(${allUnits.length} وحدات)</span>` : ''}</span>
+    </div>
+    `;
+    // المساحة (مجموع المساحات)
+    html += `
+    <div class="detail-row">
+        <span class="detail-label">المساحة:</span>
+        <span class="detail-value">${totalArea ? totalArea.toLocaleString() : ''}</span>
+    </div>
+    `;
+
+    // باقي الحقول
     Object.entries(property).forEach(([key, value]) => {
-        if (key === 'Column1') return; // تخطي الحقول غير المهمة
-        
+        if (key === 'Column1' || key === 'رقم الوحدة ' || key === 'المساحة') return;
+        if (!value && value !== 0) return;
         let displayValue = value;
         if (key === 'الاجمالى' && value) {
             displayValue = parseFloat(value).toLocaleString() + ' ريال';
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
-            return; // تخطي حقول الحالة لأننا سنعرضها بشكل مخصص
+            return;
         } else if (key === 'موقع العقار' && value) {
             displayValue = `<a href="#" onclick="openLocation('${value}'); return false;" class="location-link">${value} <i class="fas fa-external-link-alt"></i></a>`;
         }
-        
         html += `
         <div class="detail-row">
             <span class="detail-label">${key}:</span>
@@ -1032,7 +1105,7 @@ function showPropertyDetails(index) {
         </div>
         `;
     });
-    
+
     // إضافة الحالة بشكل مخصص
     html += `
     <div class="detail-row ${statusClass}">
@@ -1040,10 +1113,10 @@ function showPropertyDetails(index) {
         <span class="detail-value">${badgeIcon} ${status.display || ''}</span>
     </div>
     `;
-    
+
     html += '</div>';
-    
-    // إضافة أزرار الإجراءات
+
+    // أزرار الإجراءات
     html += `
     <div class="modal-actions">
         <button onclick="showPrintOptions(${index})" class="modal-action-btn print-btn"><i class="fas fa-print"></i> طباعة</button>
@@ -1051,17 +1124,17 @@ function showPropertyDetails(index) {
         <button onclick="closeModal()" class="modal-action-btn close-btn"><i class="fas fa-times"></i> إغلاق</button>
     </div>
     `;
-    
+
     html += '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
-    
-    // إضافة حدث إغلاق للمودال
+
+    // حدث إغلاق المودال
     document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
         if (e.target === this) {
             closeModal();
         }
     });
-    
+
     // توسيع منطقة إغلاق النافذة حول X
     const closeBtn = document.querySelector('.modal-overlay:last-child .close-modal');
     if (closeBtn) {
@@ -1208,6 +1281,56 @@ function printProperty(index) {
     printWindow.document.close();
 }
 
+// نافذة كلمة المرور مع تأثير blur
+document.addEventListener('DOMContentLoaded', function() {
+    if (!sessionStorage.getItem('auth_ok')) {
+        showPasswordModal();
+    }
+});
+
+function showPasswordModal() {
+    // أضف طبقة البلور والمودال
+    const blurDiv = document.createElement('div');
+    blurDiv.id = 'blur-overlay';
+    blurDiv.innerHTML = `
+      <div class="password-modal">
+        <h2>الرجاء إدخال كلمة المرور</h2>
+        <input type="password" id="passwordInput" placeholder="كلمة المرور" autocomplete="off" />
+        <br>
+        <button onclick="checkPassword()">دخول</button>
+        <div class="error" id="passwordError"></div>
+      </div>
+    `;
+    document.body.appendChild(blurDiv);
+
+    // منع التفاعل مع الصفحة
+    document.body.style.overflow = 'hidden';
+
+    // إدخال تلقائي بالفوكس
+    setTimeout(() => {
+        document.getElementById('passwordInput').focus();
+    }, 100);
+
+    // إدخال بالإنتر
+    document.getElementById('passwordInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') checkPassword();
+    });
+}
+
+function checkPassword() {
+    const input = document.getElementById('passwordInput');
+    const errorDiv = document.getElementById('passwordError');
+    if (input.value === 'sa12345') {
+        sessionStorage.setItem('auth_ok', '1');
+        document.getElementById('blur-overlay').remove();
+        document.body.style.overflow = '';
+    } else {
+        errorDiv.textContent = 'كلمة المرور غير صحيحة';
+        input.value = '';
+        input.focus();
+    }
+}
+
 // إغلاق المودال
 function closeModal() {
     const modals = document.querySelectorAll('.modal-overlay');
@@ -1216,8 +1339,14 @@ function closeModal() {
     });
 }
 
-function showPrintOptions(index) {
-    const property = properties[index];
+// تعديل دالة showPrintOptions
+function showPrintOptions(contractNumber, propertyName) {
+    // البحث عن العقار المطلوب
+    const property = properties.find(p => 
+        p['رقم العقد'] === contractNumber && 
+        p['اسم العقار'] === propertyName
+    );
+    
     if (!property) return;
     
     let html = `
@@ -1252,7 +1381,7 @@ function showPrintOptions(index) {
     html += `
                 </div>
                 <div class="print-actions">
-                    <button onclick="executePrint(${index})" class="modal-action-btn print-btn">
+                    <button onclick="executePrint('${contractNumber}', '${propertyName}')" class="modal-action-btn print-btn">
                         <i class="fas fa-print"></i> طباعة
                     </button>
                     <button onclick="closeModal()" class="modal-action-btn close-btn">
@@ -1266,26 +1395,17 @@ function showPrintOptions(index) {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
-function selectAllFields() {
-    document.querySelectorAll('input[name="printFields"]').forEach(checkbox => {
-        checkbox.checked = true;
-    });
-}
-
-function deselectAllFields() {
-    document.querySelectorAll('input[name="printFields"]').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-}
-
-function executePrint(index) {
-    const property = properties[index];
-    if (!property) return;
+// تعديل دالة executePrint
+function executePrint(contractNumber, propertyName) {
+    // البحث عن العقار وجميع الوحدات المرتبطة به
+    const related = properties.filter(p => 
+        p['رقم العقد'] === contractNumber && 
+        p['اسم العقار'] === propertyName
+    );
     
-    // جمع الحقول المحددة
-    const selectedFields = Array.from(document.querySelectorAll('input[name="printFields"]:checked'))
-        .map(checkbox => checkbox.value);
-    
+    if (related.length === 0) return;
+
+    const property = related[0];
     const status = calculateStatus(property);
     const printWindow = window.open('', '_blank');
     
@@ -1308,17 +1428,17 @@ function executePrint(index) {
                 padding-bottom: 10px;
                 border-bottom: 2px solid #2a4b9b;
             }
-            .property-details {
+            table {
                 width: 100%;
                 border-collapse: collapse;
                 margin-bottom: 20px;
             }
-            .property-details th, .property-details td {
+            th, td {
                 padding: 10px;
                 border: 1px solid #ddd;
                 text-align: right;
             }
-            .property-details th {
+            th {
                 background-color: #333;
                 color: white;
                 font-weight: bold;
@@ -1330,14 +1450,6 @@ function executePrint(index) {
                 font-size: 0.9rem;
                 color: #777;
             }
-            @media print {
-                .property-details th {
-                    background-color: #333 !important;
-                    color: white !important;
-                    -webkit-print-color-adjust: exact;
-                    print-color-adjust: exact;
-                }
-            }
         </style>
     </head>
     <body>
@@ -1346,45 +1458,42 @@ function executePrint(index) {
             <h2>${property['اسم العقار'] || ''}</h2>
         </div>
         
-        <table class="property-details">`;
-    
-    // إضافة الحقول المحددة فقط
-    selectedFields.forEach(key => {
-        if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') return;
+        <table>`;
+
+    // عرض رقم الوحدة (جميع الوحدات المرتبطة)
+    const allUnits = related.map(p => p['رقم الوحدة ']).filter(Boolean);
+    if (allUnits.length > 0) {
+        printContent += `
+            <tr>
+                <th>رقم الوحدة:</th>
+                <td>${allUnits.join(' , ')}${allUnits.length > 1 ? ` (${allUnits.length} وحدات)` : ''}</td>
+            </tr>`;
+    }
+
+    // إضافة باقي البيانات
+    Object.entries(property).forEach(([key, value]) => {
+        if (key === 'Column1' || key === 'رقم الوحدة ' || !value && value !== 0) return;
         
-        let displayValue = property[key];
-        
-        if (key === 'الاجمالى' && displayValue) {
-            displayValue = parseFloat(displayValue).toLocaleString() + ' ريال';
-        } else if (key === 'موقع العقار' && displayValue) {
-            const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(displayValue)}`;
-            displayValue = `<a href="${googleMapsUrl}" target="_blank">${displayValue}</a>`;
+        let displayValue = value;
+        if (key === 'الاجمالى' && value) {
+            displayValue = parseFloat(value).toLocaleString() + ' ريال';
+        } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
+            return;
         }
         
         printContent += `
             <tr>
                 <th>${key}</th>
                 <td>${displayValue}</td>
-            </tr>
-        `;
+            </tr>`;
     });
-    
-    // إضافة الحالة إذا كانت محددة
-    if (selectedFields.includes('الحالة')) {
-        let statusClass = status.final === 'جاري' ? 'status-active' :
-                         status.final === 'منتهى' ? 'status-expired' :
-                         status.final === 'على وشك' ? 'status-pending' :
-                         status.final === 'فارغ' ? 'status-empty' : '';
-        
-        printContent += `
-            <tr>
-                <th>الحالة</th>
-                <td class="${statusClass}">${status.display}</td>
-            </tr>
-        `;
-    }
-    
+
+    // إضافة الحالة
     printContent += `
+            <tr>
+                <th>الحالة:</th>
+                <td>${status.display || ''}</td>
+            </tr>
         </table>
         
         <div class="footer">
@@ -1398,10 +1507,158 @@ function executePrint(index) {
             }
         </script>
     </body>
-    </html>
-    `;
+    </html>`;
     
     printWindow.document.write(printContent);
     printWindow.document.close();
     closeModal();
+}
+
+// ابحث عن الوحدة في جميع البيانات
+function showUnitDetails(unitNumber, propertyName, contractNumber) {
+    const unit = properties.find(p => 
+        p['رقم الوحدة '] === unitNumber && 
+        p['اسم العقار'] === propertyName &&
+        p['رقم العقد'] === contractNumber
+    );
+    
+    if (!unit) return;
+
+    let html = `<div class="modal-overlay" style="display:flex;">
+        <div class="modal-box">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h3>بيانات الوحدة (${unitNumber}) - ${propertyName}</h3>
+            <div class="property-details">`;
+    
+    Object.entries(unit).forEach(([key, value]) => {
+        if (!value && value !== 0) return;
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">${key}:</span>
+            <span class="detail-value">${value}</span>
+        </div>`;
+    });
+    
+    html += '</div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+}
+
+// تعديل دالة showPropertyDetailsByKey
+function showPropertyDetailsByKey(contractNumber, propertyName) {
+    const related = properties.filter(p => 
+        p['رقم العقد'] === contractNumber && 
+        p['اسم العقار'] === propertyName
+    );
+    
+    if (related.length === 0) return;
+
+    const property = related[0]; // نأخذ أول عنصر كمرجع للبيانات المشتركة
+    
+    let html = `<div class="modal-overlay" style="display:flex;">
+        <div class="modal-box">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h3>${propertyName}</h3>
+            <div class="property-details">`;
+
+    // عرض الوحدات المرتبطة
+    const units = related.map(p => p['رقم الوحدة ']).filter(Boolean);
+    if (units.length > 0) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">الوحدات:</span>
+            <span class="detail-value">${units.join(' , ')}${units.length > 1 ? ` (${units.length} وحدات)` : ''}</span>
+        </div>`;
+    }
+
+    // عرض باقي التفاصيل
+    Object.entries(property).forEach(([key, value]) => {
+        if (key === 'رقم الوحدة ' || !value && value !== 0) return;
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">${key}:</span>
+            <span class="detail-value">${value}</span>
+        </div>`;
+    });
+
+    html += `</div>
+        <div class="modal-actions">
+            <button onclick="showPrintOptions('${contractNumber}', '${propertyName}')" class="modal-action-btn print-btn">
+                <i class="fas fa-print"></i> طباعة
+            </button>
+            ${property['موقع العقار'] ? `
+                <button onclick="openLocation('${property['موقع العقار']}')" class="modal-action-btn location-btn">
+                    <i class="fas fa-map-marker-alt"></i> فتح الموقع
+                </button>` : ''}
+            <button onclick="closeModal()" class="modal-action-btn close-btn">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+}
+
+// عرض تفاصيل العداد
+function showMeterDetails(meterNumber, propertyName, contractNumber) {
+    // البحث عن جميع العقود التي تستخدم نفس رقم العداد
+    const relatedProperties = properties.filter(p => 
+        p['رقم عداد الكهرباء'] === meterNumber
+    );
+    
+    let html = `<div class="modal-overlay" style="display:flex;">
+        <div class="modal-box">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h3>تفاصيل عداد الكهرباء (${meterNumber})</h3>
+            <div class="meter-details">`;
+
+    // عرض العقود المرتبطة بهذا العداد
+    if (relatedProperties.length > 1) {
+        html += `
+        <div class="detail-group shared-meter">
+            <h4><i class="fas fa-share-alt"></i> عداد مشترك بين العقود التالية:</h4>
+            ${relatedProperties.map(prop => `
+                <div class="shared-contract" onclick="showPropertyDetailsByKey('${prop['رقم العقد']}', '${prop['اسم العقار']}')">
+                    <div class="contract-info">
+                        <div>رقم العقد: ${prop['رقم العقد']}</div>
+                        <div>اسم العقار: ${prop['اسم العقار']}</div>
+                        <div>المستأجر: ${prop['اسم المستأجر'] || 'غير محدد'}</div>
+                    </div>
+                    <i class="fas fa-chevron-left"></i>
+                </div>
+            `).join('')}
+        </div>`;
+    }
+
+    // عرض التفاصيل الحالية للعقد المحدد
+    const currentProperty = relatedProperties.find(p => 
+        p['رقم العقد'] === contractNumber && 
+        p['اسم العقار'] === propertyName
+    );
+
+    if (currentProperty) {
+        Object.entries(currentProperty).forEach(([key, value]) => {
+            if (!value && value !== 0) return;
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">${key}:</span>
+                <span class="detail-value">${value}</span>
+            </div>`;
+        });
+    }
+    
+    html += `</div></div></div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
 }
