@@ -451,7 +451,7 @@ main {
   padding: 8px 15px;
   border-radius: 8px;
   margin-top: 10px;
-  font-size: 0.9rem;
+  font-size: 1.5rem;
   color: var(--primary-color);
   text-align: center;
   border-right: 4px solid var(--secondary-color);
@@ -1813,147 +1813,76 @@ footer {
     background: #e0f7fa !important;
     border: 2px solid #0991d0 !important;
 }
+
 .total-item.deed-area-stat .total-label,
 .total-item.deed-area-stat .total-value,
 .total-item.deed-area-stat .fa-ruler-combined {
-    color: #0991d0 !important;
+    color: #317ee7 !important;
     font-weight: 900;
     font-size: 1.15em;
 }
 
-/* رقم الصك */
-.total-item.deed-number-stat {
-    background: #fffbe6 !important;
-    border: 2px solid #eaba39 !important;
-}
-.total-item.deed-number-stat .total-label,
-.total-item.deed-number-stat .total-value,
-.total-item.deed-number-stat .fa-file-alt {
-    color: #317ee7  !important;
-    font-weight: 900;
-    font-size: 1.15em;
+/* تحسين تنسيق الأيقونات */
+.deed-area-stat i {
+    margin-left: 5px;
 }
 
-/* رقم عداد الكهرباء */
-.total-item.electric-meter-stat {
-    background: #fef9c3 !important;
-    border: 2px solid #eaba39 !important;
-}
-.total-item.electric-meter-stat .total-label,
-.total-item.electric-meter-stat .total-value,
-.total-item.electric-meter-stat .fa-bolt {
-    color: #317ee7  !important;
-    font-weight: 900;
-    font-size: 1.15em;
-}
-
-/* تنسيق صف عداد الكهرباء في البطاقة */
-.card-row.electric-meter-row {
-    background: #f0f7ff;
+/* تنسيق مساحة الصك في البطاقات */
+.card-row:has(.card-label:contains("مساحة الصك")) {
+    background: #e0f7fa;
     border-radius: 6px;
     margin: 4px 0;
     padding: 8px;
 }
 
-.card-row.electric-meter-row .card-label,
-.card-row.electric-meter-row .card-value {
+.card-row:has(.card-label:contains("مساحة الصك")) .card-label,
+.card-row:has(.card-label:contains("مساحة الصك")) .card-value {
     color: #317ee7;
     font-weight: bold;
 }
 
-.card-row:has(.card-label:contains("المساحة")) {
-    background: #edf7ed;
-    border-radius: 6px;
-    margin: 4px 0;
-    padding: 8px;
-}
-
-.card-row:has(.card-label:contains("المساحة")) .card-label,
-.card-row:has(.card-label:contains("المساحة")) .card-value {
-    color: #2e7d32;
-    font-weight: bold;
-}
-
-.card-row:has(.card-label:contains("المساحة")) .card-label::before {
-    content: '\f546';
+.card-row:has(.card-label:contains("مساحة الصك")) .card-label::before {
+    content: '\f548';
     font-family: 'Font Awesome 5 Free';
     font-weight: 900;
     margin-left: 4px;
-    color: #2e7d32;
+    color: #317ee7;
 }
 
+/* تنسيق أرقام الوحدات كروابط تفاعلية */
 .unit-link {
-    color: #2a4b9b;
-    text-decoration: underline;
-    cursor: pointer;
-    font-weight: bold;
-    margin: 0 2px;
+  color: #2a4b9b;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.2s, background 0.2s;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: #f3f6ff;
+  margin: 0 2px;
+  display: inline-block;
 }
 .unit-link:hover {
-    color: #f8a51b;
+  color: #fff;
+  background: #2a4b9b;
+  text-decoration: none;
 }
 
-/* تنسيق روابط العدادات */
+/* تنسيق أرقام العدادات كروابط تفاعلية */
 .meter-link {
-    color: #317ee7;
-    text-decoration: underline;
-    cursor: pointer;
-    font-weight: bold;
-    margin: 0 2px;
+  color: #eaba39;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.2s, background 0.2s;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: #fffbe6;
+  margin: 0 2px;
+  display: inline-block;
 }
-
 .meter-link:hover {
-    color: #f8a51b;
-}
-
-.meters-count {
-    color: #666;
-    font-size: 0.9em;
-    margin-right: 5px;
-}
-
-/* تنسيق تفاصيل العداد المشترك */
-.shared-meter {
-    background: #f0f7ff;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 15px 0;
-}
-
-.shared-meter h4 {
-    color: #317ee7;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.shared-contract {
-    background: white;
-    border-radius: 6px;
-    padding: 12px;
-    margin: 8px 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    transition: all 0.3s ease;
-}
-
-.shared-contract:hover {
-    background: #e3efff;
-    transform: translateX(-5px);
-}
-
-.contract-info {
-    flex: 1;
-}
-
-.contract-info div {
-    margin: 3px 0;
-}
-
-.shared-contract i {
-    color: #317ee7;
-    font-size: 1.2em;
+  color: #fff;
+  background: #eaba39;
+  text-decoration: none;
 }
