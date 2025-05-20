@@ -109,7 +109,8 @@ function showCountrySelection() {
 
 // عرض فلتر الحالة
 function showStatusFilter() {
-    const statuses = ['جاري', 'منتهى', 'على وشك'];
+    // أضف "الفارغ" إلى قائمة الحالات
+    const statuses = ['جاري', 'منتهى', 'على وشك', 'فارغ'];
     let html = '<div class="modal-overlay" style="display:flex;"><div class="modal-box"><button class="close-modal" onclick="closeModal()">×</button>';
     html += '<h3>فلتر الحالة</h3><div class="status-filter">';
     
@@ -512,11 +513,11 @@ function renderTotals(data) {
     const container = document.getElementById('totalContainer');
     container.innerHTML = '';
 
-    // جميع العمليات الحالية...
+    // الإحصائيات الأساسية دائماً
     const totalUnits = data.length;
     addTotalItem(container, 'عدد الوحدات', totalUnits, 'units-stat');
 
-    // تجميع العقود الفريدة حسب رقم العقد واسم العقار
+    // تجميع العقود الفريدة
     const uniqueContracts = {};
     data.forEach(property => {
         if (property['رقم العقد'] && property['اسم العقار']) {
@@ -526,19 +527,26 @@ function renderTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    // جمع مساحة الصك من uniqueList
-    const totalDeedArea = uniqueList.reduce((sum, property) => {
-        const deedArea = property['مساحةالصك'];
-        if (deedArea && !isNaN(parseFloat(deedArea))) {
-            return sum + parseFloat(deedArea);
+    // إظهار رقم الصك ومساحة الصك فقط عند تحديد عقار
+    if (currentProperty) {
+        // رقم الصك
+        const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
+        if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
+            addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
         }
-        return sum;
-    }, 0);
 
-    // رقم الصك الفريد الأول
-    const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
-    if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
-        addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
+        // مساحة الصك
+        const totalDeedArea = uniqueList.reduce((sum, property) => {
+            const deedArea = property['مساحةالصك'];
+            if (deedArea && !isNaN(parseFloat(deedArea))) {
+                return sum + parseFloat(deedArea);
+            }
+            return sum;
+        }, 0);
+        
+        if (totalDeedArea > 0) {
+            addTotalItem(container, 'مساحة الصك', `<i class="fas fa-ruler-combined"></i> ${totalDeedArea.toLocaleString()} م²`, 'deed-area-stat');
+        }
     }
 
     // باقي الإحصائيات كما هي...
@@ -626,6 +634,7 @@ function renderMobileTotals(data) {
     const totalUnits = data.length;
     addTotalItem(container, 'عدد الوحدات', totalUnits, 'units-stat');
 
+    // تجميع العقود الفريدة
     const uniqueContracts = {};
     data.forEach(property => {
         if (property['رقم العقد'] && property['اسم العقار']) {
@@ -635,10 +644,26 @@ function renderMobileTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    // رقم الصك الفريد الأول
-    const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
-    if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
-        addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
+    // إظهار رقم الصك ومساحة الصك فقط عند تحديد عقار
+    if (currentProperty) {
+        // رقم الصك
+        const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
+        if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
+            addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
+        }
+
+        // مساحة الصك
+        const totalDeedArea = uniqueList.reduce((sum, property) => {
+            const deedArea = property['مساحةالصك'];
+            if (deedArea && !isNaN(parseFloat(deedArea))) {
+                return sum + parseFloat(deedArea);
+            }
+            return sum;
+        }, 0);
+        
+        if (totalDeedArea > 0) {
+            addTotalItem(container, 'مساحة الصك', `<i class="fas fa-ruler-combined"></i> ${totalDeedArea.toLocaleString()} م²`, 'deed-area-stat');
+        }
     }
 
     // باقي الإحصائيات كما هي...
@@ -1240,8 +1265,7 @@ function printProperty(index) {
             <tr>
                 <th>${key}</th>
                 <td>${displayValue}</td>
-            </tr>
-        `;
+            </tr>`;
     });
     
     // إضافة الحالة
