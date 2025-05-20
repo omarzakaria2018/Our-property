@@ -1886,3 +1886,36 @@ footer {
   background: #eaba39;
   text-decoration: none;
 }
+
+/* تحسينات للأزرار المصدرة */
+.export-btn {
+    background: linear-gradient(to left, #217346, #1e6f3d);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin: 0 10px;
+}
+
+.export-btn:hover {
+    background: linear-gradient(to left, #1e6f3d, #185733);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 115, 70, 0.2);
+}
+
+.export-btn i {
+    font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+    .export-btn {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+}
