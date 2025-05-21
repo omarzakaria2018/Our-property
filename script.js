@@ -859,7 +859,7 @@ function renderTable(data) {
             } else if (field === 'الاجمالى') {
                 html += `<td>${property[field] ? parseFloat(property[field]).toLocaleString() + ' ريال' : ''}</td>`;
             } else if (field === 'موقع العقار' && property[field]) {
-                html += `<td><a href="#" onclick="openLocation('${property[field]}'); return false;" class="location-link">${property[field]} <i class="fas fa-external-link-alt"></i></a></td>`;
+                html += `<td><a href="#" onclick="openLocation('${property[field]}'); return false;" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a></td>`;
             } else {
                 html += `<td>${property[field] || ''}</td>`;
             }
@@ -1121,12 +1121,16 @@ function showPropertyDetails(index) {
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
             return;
         } else if (key === 'موقع العقار' && value) {
-            displayValue = `<a href="#" onclick="openLocation('${value}'); return false;" class="location-link">${value} <i class="fas fa-external-link-alt"></i></a>`;
+            let url = value;
+            if (!url.startsWith('http')) {
+                url = `https://www.google.com/maps/search/${encodeURIComponent(url)}`;
+            }
+            displayValue = `<a href="${url}" target="_blank" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a>`;
         }
         html += `
         <div class="detail-row">
             <span class="detail-label">${key}:</span>
-            <span class="detail-value">${displayValue || ''}</span>
+            <span class="detail-value">${displayValue}</span>
         </div>
         `;
     });
@@ -1253,12 +1257,11 @@ function printProperty(index) {
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
             return; // تخطي حقول الحالة لأننا سنعرضها بشكل مخصص
         } else if (key === 'موقع العقار' && value) {
-            if (value.startsWith('http://') || value.startsWith('https://')) {
-                displayValue = `<a href="${value}" target="_blank">${value}</a>`;
-            } else {
-                const googleMapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(value)}`;
-                displayValue = `<a href="${googleMapsUrl}" target="_blank">${value}</a>`;
+            let url = value;
+            if (!url.startsWith('http')) {
+                url = `https://www.google.com/maps/search/${encodeURIComponent(url)}`;
             }
+            displayValue = `<a href="${url}" target="_blank" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a>`;
         }
         
         printContent += `
@@ -1419,6 +1422,14 @@ function showPrintOptions(contractNumber, propertyName) {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
+function selectAllFields() {
+    document.querySelectorAll('input[name="printFields"]').forEach(cb => cb.checked = true);
+}
+
+function deselectAllFields() {
+    document.querySelectorAll('input[name="printFields"]').forEach(cb => cb.checked = false);
+}
+
 // تعديل دالة executePrint
 function executePrint(contractNumber, propertyName) {
     // البحث عن العقار وجميع الوحدات المرتبطة به
@@ -1426,13 +1437,20 @@ function executePrint(contractNumber, propertyName) {
         p['رقم العقد'] === contractNumber && 
         p['اسم العقار'] === propertyName
     );
-    
     if (related.length === 0) return;
 
     const property = related[0];
     const status = calculateStatus(property);
     const printWindow = window.open('', '_blank');
-    
+
+    // الحصول على الحقول المحددة فقط
+    const selectedFields = Array.from(document.querySelectorAll('input[name="printFields"]:checked')).map(cb => cb.value);
+
+    if (selectedFields.length === 0) {
+        alert('الرجاء تحديد حقل واحد على الأقل للطباعة');
+        return;
+    }
+
     let printContent = `
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
@@ -1481,30 +1499,37 @@ function executePrint(contractNumber, propertyName) {
             <h1>تفاصيل العقار</h1>
             <h2>${property['اسم العقار'] || ''}</h2>
         </div>
-        
         <table>`;
 
-    // عرض رقم الوحدة (جميع الوحدات المرتبطة)
-    const allUnits = related.map(p => p['رقم الوحدة ']).filter(Boolean);
-    if (allUnits.length > 0) {
-        printContent += `
-            <tr>
-                <th>رقم الوحدة:</th>
-                <td>${allUnits.join(' , ')}${allUnits.length > 1 ? ` (${allUnits.length} وحدات)` : ''}</td>
-            </tr>`;
+    // إذا تم اختيار رقم الوحدة، اعرض جميع الوحدات المرتبطة
+    if (selectedFields.includes('رقم الوحدة ')) {
+        const allUnits = related.map(p => p['رقم الوحدة ']).filter(Boolean);
+        if (allUnits.length > 0) {
+            printContent += `
+                <tr>
+                    <th>رقم الوحدة:</th>
+                    <td>${allUnits.join(' , ')}${allUnits.length > 1 ? ` (${allUnits.length} وحدات)` : ''}</td>
+                </tr>`;
+        }
     }
 
-    // إضافة باقي البيانات
-    Object.entries(property).forEach(([key, value]) => {
-        if (key === 'Column1' || key === 'رقم الوحدة ' || !value && value !== 0) return;
-        
+    // طباعة الحقول المحددة فقط
+    selectedFields.forEach(key => {
+        if (key === 'رقم الوحدة ') return; // تمت طباعتها أعلاه
+        let value = property[key];
+        if (!value && value !== 0) return;
         let displayValue = value;
         if (key === 'الاجمالى' && value) {
             displayValue = parseFloat(value).toLocaleString() + ' ريال';
         } else if (key === 'الحالة النهائية' || key === 'الحالة الجديدة') {
             return;
+        } else if (key === 'موقع العقار' && value) {
+            let url = value;
+            if (!url.startsWith('http')) {
+                url = `https://www.google.com/maps/search/${encodeURIComponent(url)}`;
+            }
+            displayValue = `<a href="${url}" target="_blank" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a>`;
         }
-        
         printContent += `
             <tr>
                 <th>${key}</th>
@@ -1512,19 +1537,12 @@ function executePrint(contractNumber, propertyName) {
             </tr>`;
     });
 
-    // إضافة الحالة
     printContent += `
-            <tr>
-                <th>الحالة:</th>
-                <td>${status.display || ''}</td>
-            </tr>
         </table>
-        
         <div class="footer">
             <p>تمت طباعة هذا المستند من نظام شركة السنيدي العقارية</p>
             <p>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-SA')}</p>
         </div>
-        
         <script>
             window.onload = function() {
                 window.print();
@@ -1532,7 +1550,7 @@ function executePrint(contractNumber, propertyName) {
         </script>
     </body>
     </html>`;
-    
+
     printWindow.document.write(printContent);
     printWindow.document.close();
     closeModal();
@@ -1601,10 +1619,18 @@ function showPropertyDetailsByKey(contractNumber, propertyName) {
     // عرض باقي التفاصيل
     Object.entries(property).forEach(([key, value]) => {
         if (key === 'رقم الوحدة ' || !value && value !== 0) return;
+        let displayValue = value;
+        if (key === 'موقع العقار' && value) {
+            let url = value;
+            if (!url.startsWith('http')) {
+                url = `https://www.google.com/maps/search/${encodeURIComponent(url)}`;
+            }
+            displayValue = `<a href="${url}" target="_blank" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a>`;
+        }
         html += `
         <div class="detail-row">
             <span class="detail-label">${key}:</span>
-            <span class="detail-value">${value}</span>
+            <span class="detail-value">${displayValue}</span>
         </div>`;
     });
 
