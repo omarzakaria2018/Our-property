@@ -1957,3 +1957,28 @@ footer {
     color: #f8a51b;
     margin-left: 4px;
 }
+
+/* أنماط جديدة للمبالغ الضريبية */
+.total-amount {
+    border-top: 1px solid #eee;
+    margin-top: 10px;
+    padding-top: 10px;
+    font-weight: bold;
+}
+
+.card-row.total-amount .card-value {
+    color: #2a4b9b;
+}
+
+/* تمييز بنود الضريبة في الإحصائيات */
+.total-item.commercial-taxable { background: #e8f5e9 !important; border: 2px solid #43a047 !important; }
+.total-item.commercial-taxable .total-label, .total-item.commercial-taxable .total-value { color: #388e3c !important; }
+
+.total-item.commercial-tax { background: #fff3e0 !important; border: 2px solid #ff9800 !important; }
+.total-item.commercial-tax .total-label, .total-item.commercial-tax .total-value { color: #ef6c00 !important; }
+
+.total-item.commercial-total { background: #e3f2fd !important; border: 2px solid #2196f3 !important; }
+.total-item.commercial-total .total-label, .total-item.commercial-total .total-value { color: #1976d2 !important; }
+
+.total-item.residential-total { background: #f0fdf4 !important; border: 2px solid #059669 !important; }
+.total-item.residential-total .total-label, .total-item.residential-total .total-value { color: #059669 !important; }
