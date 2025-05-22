@@ -527,67 +527,51 @@ function renderTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    // إظهار رقم الصك ومساحة الصك فقط عند تحديد عقار
-    if (currentProperty) {
-        // رقم الصك
-        const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
-        if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
-            addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
-        }
-
-        // مساحة الصك
-        const totalDeedArea = uniqueList.reduce((sum, property) => {
-            const deedArea = property['مساحةالصك'];
-            if (deedArea && !isNaN(parseFloat(deedArea))) {
-                return sum + parseFloat(deedArea);
-            }
-            return sum;
-        }, 0);
-        
-        if (totalDeedArea > 0) {
-            addTotalItem(container, 'مساحة الصك', `<i class="fas fa-ruler-combined"></i> ${totalDeedArea.toLocaleString()} م²`, 'deed-area-stat');
-        }
-    }
-
     // باقي الإحصائيات كما هي...
     const tenantsCount = uniqueList.filter(p => p['اسم المستأجر']).length;
     addTotalItem(container, 'عدد المستأجرين', tenantsCount, 'tenants-stat');
 
-    // عدّ الفارغ بناءً على عدم وجود اسم مستأجر أو مالك (مرة واحدة لكل عقد)
     const emptyCount = uniqueList.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
 
-    // الجاري
     const activeCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'جاري';
     }).length;
     addTotalItem(container, 'الجاري', activeCount, 'active-stat');
 
-    // المنتهي
     const expiredCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'منتهى';
     }).length;
     addTotalItem(container, 'المنتهي', expiredCount, 'expired-stat');
 
-    // الفارغ
     addTotalItem(container, 'الفارغ', emptyCount, 'empty-stat');
 
-    // على وشك
     const pendingCount = uniqueList.filter(property => {
         const status = calculateStatus(property);
         return status.final === 'على وشك';
     }).length;
     addTotalItem(container, 'على وشك', pendingCount, 'pending-stat');
 
-    // مبلغ تجاري (للنوع الضريبي)
+    // ==== الحسابات الضريبية الجديدة ====
+    // مبلغ تجاري (ضريبي)
     const commercialTotal = uniqueList.reduce((sum, property) => {
         if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
             return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
-    addTotalItem(container, 'مبلغ تجاري', commercialTotal.toLocaleString() + ' ريال');
+
+    // مبلغ قبل الضريبة (الخاضع)
+    const commercialTaxable = uniqueList.reduce((sum, property) => {
+        if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + (parseFloat(property['الاجمالى']) / 1.15);
+        }
+        return sum;
+    }, 0);
+
+    // مبلغ الضريبة
+    const commercialTax = commercialTotal - commercialTaxable;
 
     // مبلغ سكني
     const residentialTotal = uniqueList.reduce((sum, property) => {
@@ -596,23 +580,25 @@ function renderTotals(data) {
         }
         return sum;
     }, 0);
-    addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
 
-    // الاجمالي
-    const grandTotal = uniqueList.reduce((sum, property) => {
-        const value = property['الاجمالى'];
-        if (value && !isNaN(parseFloat(value))) {
-            return sum + parseFloat(value);
-        }
-        return sum;
-    }, 0);
+    // الاجمالي الجديد = مبلغ قبل الضريبة + مبلغ سكني
+    const newGrandTotal = commercialTaxable + residentialTotal;
 
+    // عرض البنود الجديدة
+    addTotalItem(container, 'مبلغ تجاري (شامل الضريبة)', commercialTotal.toLocaleString() + ' ريال', 'commercial-total');
+    addTotalItem(container, 'مبلغ قبل ضريبة', commercialTaxable.toLocaleString() + ' ريال', 'commercial-taxable');
+    addTotalItem(container, 'ضريبة', commercialTax.toLocaleString() + ' ريال', 'commercial-tax');
+    addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال', 'residential-total');
+
+    // الاجمالي الجديد مع توضيح
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي (قبل الضريبة + السكني):</span>
+        <span class="total-value">${newGrandTotal.toLocaleString()} ريال</span>
+        <div style="font-size:0.95em;color:#e67e22;margin-top:4px;">تم خصم قيمة الضريبة من الإجمالي</div>`;
     container.appendChild(grandTotalItem);
 
-    // إضافة معلومات الفلتر الحالي
+    // إضافة معلومات الفلتر الحالي كما هي...
     let filterInfo = '';
     if (currentCountry) filterInfo += `المدينة: ${currentCountry} | `;
     if (currentProperty) filterInfo += `العقار: ${currentProperty} | `;
@@ -644,33 +630,11 @@ function renderMobileTotals(data) {
     });
     const uniqueList = Object.values(uniqueContracts);
 
-    // إظهار رقم الصك ومساحة الصك فقط عند تحديد عقار
-    if (currentProperty) {
-        // رقم الصك
-        const firstDeedNumber = uniqueList.find(p => p['رقم الصك'] && p['رقم الصك'].toString().trim() !== '');
-        if (firstDeedNumber && firstDeedNumber['رقم الصك']) {
-            addTotalItem(container, 'رقم الصك', `<i class="fas fa-file-alt"></i> ${firstDeedNumber['رقم الصك']}`, 'deed-number-stat');
-        }
-
-        // مساحة الصك
-        const totalDeedArea = uniqueList.reduce((sum, property) => {
-            const deedArea = property['مساحةالصك'];
-            if (deedArea && !isNaN(parseFloat(deedArea))) {
-                return sum + parseFloat(deedArea);
-            }
-            return sum;
-        }, 0);
-        
-        if (totalDeedArea > 0) {
-            addTotalItem(container, 'مساحة الصك', `<i class="fas fa-ruler-combined"></i> ${totalDeedArea.toLocaleString()} م²`, 'deed-area-stat');
-        }
-    }
-
-    // باقي الإحصائيات كما هي...
+    // عدد المستأجرين
     const tenantsCount = uniqueList.filter(p => p['اسم المستأجر']).length;
     addTotalItem(container, 'عدد المستأجرين', tenantsCount, 'tenants-stat');
 
-    // عدّ الفارغ بناءً على عدم وجود اسم مستأجر أو مالك (مرة واحدة لكل عقد)
+    // الفارغ
     const emptyCount = uniqueList.filter(property => !property['اسم المستأجر'] || !property['المالك']).length;
 
     // الجاري
@@ -697,14 +661,25 @@ function renderMobileTotals(data) {
     }).length;
     addTotalItem(container, 'على وشك', pendingCount, 'pending-stat');
 
-    // مبلغ تجاري (للنوع الضريبي)
+    // ==== الحسابات الضريبية الجديدة ====
+    // مبلغ تجاري (ضريبي)
     const commercialTotal = uniqueList.reduce((sum, property) => {
         if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
             return sum + parseFloat(property['الاجمالى']);
         }
         return sum;
     }, 0);
-    addTotalItem(container, 'مبلغ تجاري', commercialTotal.toLocaleString() + ' ريال');
+
+    // مبلغ قبل الضريبة (الخاضع)
+    const commercialTaxable = uniqueList.reduce((sum, property) => {
+        if (property['نوع العقد'] === 'ضريبي' && property['الاجمالى'] && !isNaN(parseFloat(property['الاجمالى']))) {
+            return sum + (parseFloat(property['الاجمالى']) / 1.15);
+        }
+        return sum;
+    }, 0);
+
+    // مبلغ الضريبة
+    const commercialTax = commercialTotal - commercialTaxable;
 
     // مبلغ سكني
     const residentialTotal = uniqueList.reduce((sum, property) => {
@@ -713,20 +688,22 @@ function renderMobileTotals(data) {
         }
         return sum;
     }, 0);
-    addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال');
 
-    // الاجمالي
-    const grandTotal = uniqueList.reduce((sum, property) => {
-        const value = property['الاجمالى'];
-        if (value && !isNaN(parseFloat(value))) {
-            return sum + parseFloat(value);
-        }
-        return sum;
-    }, 0);
+    // الاجمالي الجديد = مبلغ قبل الضريبة + مبلغ سكني
+    const newGrandTotal = commercialTaxable + residentialTotal;
 
+    // عرض البنود الجديدة
+    addTotalItem(container, 'مبلغ تجاري (شامل الضريبة)', commercialTotal.toLocaleString() + ' ريال', 'commercial-total');
+    addTotalItem(container, 'مبلغ قبل ضريبة', commercialTaxable.toLocaleString() + ' ريال', 'commercial-taxable');
+    addTotalItem(container, 'ضريبة', commercialTax.toLocaleString() + ' ريال', 'commercial-tax');
+    addTotalItem(container, 'مبلغ سكني', residentialTotal.toLocaleString() + ' ريال', 'residential-total');
+
+    // الاجمالي الجديد مع توضيح
     const grandTotalItem = document.createElement('div');
     grandTotalItem.className = 'total-item grand-total';
-    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي:</span> <span class="total-value">${grandTotal.toLocaleString()} ريال</span>`;
+    grandTotalItem.innerHTML = `<span class="total-label">الاجمالي (قبل الضريبة + السكني):</span>
+        <span class="total-value">${newGrandTotal.toLocaleString()} ريال</span>
+        <div style="font-size:0.95em;color:#e67e22;margin-top:4px;">تم خصم قيمة الضريبة من الإجمالي</div>`;
     container.appendChild(grandTotalItem);
 
     // إضافة معلومات الفلتر الحالي
@@ -860,7 +837,17 @@ function renderTable(data) {
             } else if (field === 'الحالة') {
                 html += `<td class="${statusClass}">${status.display || ''}</td>`;
             } else if (field === 'الاجمالى') {
-                html += `<td>${property[field] ? parseFloat(property[field]).toLocaleString() + ' ريال' : ''}</td>`;
+                if (property['نوع العقد'] === 'ضريبي') {
+                    const baseAmount = property[field] / 1.15;
+                    const vatAmount = property[field] - baseAmount;
+                    html += `<td>
+                        <div>المبلغ الخاضع: ${parseFloat(baseAmount).toFixed(2).toLocaleString()} ريال</div>
+                        <div>الضريبة (15%): ${parseFloat(vatAmount).toFixed(2).toLocaleString()} ريال</div>
+                        <div><strong>الإجمالي: ${parseFloat(property[field]).toLocaleString()} ريال</strong></div>
+                    </td>`;}
+                else {
+                    html += `<td>${property[field] ? parseFloat(property[field]).toLocaleString() + ' ريال' : ''}</td>`;
+                }
             } else if (field === 'موقع العقار' && property[field]) {
                 html += `<td><a href="#" onclick="openLocation('${property[field]}'); return false;" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a></td>`;
             } else {
@@ -1143,7 +1130,50 @@ function showPropertyDetails(index) {
     </div>
     `;
 
-    html += '</div>';
+    // إضافة المبلغ الخاضع للضريبة وقيمة الضريبة
+    if (property['الاجمالى']) {
+        if (property['نوع العقد'] === 'ضريبي') {
+            const baseAmount = property['الاجمالى'] / 1.15;
+            const vatAmount = property['الاجمالى'] - baseAmount;
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">المبلغ الخاضع للضريبة:</span>
+                <span class="detail-value">${parseFloat(baseAmount).toFixed(2).toLocaleString()} ريال</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">قيمة الضريبة (15%):</span>
+                <span class="detail-value">${parseFloat(vatAmount).toFixed(2).toLocaleString()} ريال</span>
+            </div>
+            <div class="detail-row" style="font-weight: bold;">
+                <span class="detail-label">الإجمالي شامل الضريبة:</span>
+                <span class="detail-value" style="color: #2a4b9b;">
+                    ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
+                </span>
+            </div>`;
+        } else {
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">الإجمالي:</span>
+                <span class="detail-value" style="color: #2a4b9b; font-weight: bold;">
+                    ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
+                </span>
+            </div>`;
+        }
+    }
+
+    // عرض موقع العقار إذا كان متوفراً
+    if (property['موقع العقار']) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">موقع العقار:</span>
+            <span class="detail-value">
+                <a href="#" onclick="openLocation('${property['موقع العقار']}'); return false;" 
+                   class="location-link">فتح الخريطة <i class="fas fa-map-marker-alt"></i></a>
+            </span>
+        </div>`;
+    }
+
+    html += `</div>`;
 
     // أزرار الإجراءات
     html += `
@@ -1153,7 +1183,6 @@ function showPropertyDetails(index) {
         <button onclick="closeModal()" class="modal-action-btn close-btn"><i class="fas fa-times"></i> إغلاق</button>
     </div>
     `;
-
     html += '</div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
 
@@ -1853,15 +1882,35 @@ function showPropertyDetailsByKey(contractNumber, propertyName) {
         <span class="detail-value">${badgeIcon} ${status.display || ''}</span>
     </div>`;
 
-    // عرض الإجمالي
+    // إضافة المبلغ الخاضع للضريبة وقيمة الضريبة
     if (property['الاجمالى']) {
-        html += `
-        <div class="detail-row">
-            <span class="detail-label">الاجمالى:</span>
-            <span class="detail-value" style="color: #2a4b9b; font-weight: bold;">
-                ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
-            </span>
-        </div>`;
+        if (property['نوع العقد'] === 'ضريبي') {
+            const baseAmount = property['الاجمالى'] / 1.15;
+            const vatAmount = property['الاجمالى'] - baseAmount;
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">المبلغ الخاضع للضريبة:</span>
+                <span class="detail-value">${parseFloat(baseAmount).toFixed(2).toLocaleString()} ريال</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">قيمة الضريبة (15%):</span>
+                <span class="detail-value">${parseFloat(vatAmount).toFixed(2).toLocaleString()} ريال</span>
+            </div>
+            <div class="detail-row" style="font-weight: bold;">
+                <span class="detail-label">الإجمالي شامل الضريبة:</span>
+                <span class="detail-value" style="color: #2a4b9b;">
+                    ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
+                </span>
+            </div>`;
+        } else {
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">الإجمالي:</span>
+                <span class="detail-value" style="color: #2a4b9b; font-weight: bold;">
+                    ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
+                </span>
+            </div>`;
+        }
     }
 
     // عرض موقع العقار إذا كان متوفراً
@@ -1876,12 +1925,15 @@ function showPropertyDetailsByKey(contractNumber, propertyName) {
         </div>`;
     }
 
-    html += `</div>
-        <div class="modal-actions">
-            <button onclick="showPrintOptions('${property['رقم العقد']}', '${property['اسم العقار']}')" 
-                    class="modal-action-btn print-btn">
-                <i class="fas fa-print"></i> طباعة
-            </button>`;
+    html += `</div>`;
+
+    // أزرار الإجراءات
+    html += `
+    <div class="modal-actions">
+        <button onclick="showPrintOptions('${property['رقم العقد']}', '${property['اسم العقار']}')" 
+                class="modal-action-btn print-btn">
+            <i class="fas fa-print"></i> طباعة
+        </button>`;
             
     if (property['موقع العقار']) {
         html += `
@@ -1892,10 +1944,10 @@ function showPropertyDetailsByKey(contractNumber, propertyName) {
     }
     
     html += `
-            <button onclick="closeModal()" class="modal-action-btn close-btn">
-                <i class="fas fa-times"></i> إغلاق
-            </button>
-        </div>
+        <button onclick="closeModal()" class="modal-action-btn close-btn">
+            <i class="fas fa-times"></i> إغلاق
+        </button>
+    </div>
     </div></div>`;
 
     document.body.insertAdjacentHTML('beforeend', html);
@@ -1905,3 +1957,18 @@ function showPropertyDetailsByKey(contractNumber, propertyName) {
         if (e.target === this) closeModal();
     });
 }
+
+// CSS الإضافي
+const style = document.createElement('style');
+style.textContent = `
+@media (max-width: 900px) {
+  aside {
+    width: 90vw !important;
+    max-width: 95vw !important;
+    min-width: 270px;
+    left: unset;
+    right: 0;
+  }
+}
+`;
+document.head.appendChild(style);
