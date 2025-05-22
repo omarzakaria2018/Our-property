@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شركة السنيدي العقارية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="header-section header-countries">
+        <div class="countries-container">
+          <button class="clear-country-filter" style="display: none"><i class="fas fa-times"></i> إزالة الفلتر</button>
+          <div id="countryButtons"></div>
+        </div>
+      </div>
+      <div class="header-section header-title">
+        <h1>شركة السنيدي العقارية</h1>
+      </div>
+      <div class="header-section header-actions">
+        <div class="view-toggle">
+          <button id="table-btn" onclick="toggleView('table')"><i class="fas fa-table"></i> جدول</button>
+          <button id="cards-btn" onclick="toggleView('cards')"><i class="fas fa-th-large"></i> بطاقات</button>
+        </div>
+        <button id="exportExcel" class="export-btn" onclick="exportToExcel()">
+          <i class="fas fa-file-excel"></i> تصدير Excel
+        </button>
+        <div id="headerFilters" class="header-filters"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Menu -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+      <h3>القائمة</h3>
+      <button class="mobile-menu-close" id="mobileMenuClose">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mobile-menu-content">
+      <ol class="mobile-dropdown-list">
+        <li>
+          <button id="mobile-country-btn"><i class="fas fa-globe"></i> البلاد <span class="badge" id="countryCount"></span></button>
+          <ul class="dropdown-sub" id="mobile-country-list"></ul>
+        </li>
+        <li>
+          <button id="mobile-property-btn"><i class="fas fa-building"></i> العقارات <span class="badge" id="propertyCount"></span></button>
+        </li>
+        <li>
+          <button id="mobile-filter-btn"><i class="fas fa-filter"></i> الفلتر <span class="badge" id="filterCount"></span></button>
+          <ul class="dropdown-sub" id="mobile-filter-list"></ul>
+        </li>
+        <li>
+          <button id="mobile-view-btn"><i class="fas fa-eye"></i> طريقة العرض</button>
+          <ul class="dropdown-sub" id="mobile-view-list"></ul>
+        </li>
+      </ol>
+      <div id="mobileTotals" class="mobile-totals"></div>
+    </div>
+  </div>
+
+  <aside id="sidebar">
+    <button class="hide-sidebar-btn" onclick="toggleSidebar()" style="display:none;">إخفاء القائمة</button>
+    <div class="sidebar-header">
+      <h3>العقارات</h3>
+    </div>
+    <input type="text" id="propertySearch" placeholder="بحث في العقارات...">
+    <div id="propertyList"></div>
+  </aside>
+
+  <main>
+    <div id="searchSection">
+      <input type="text" id="globalSearch" placeholder="بحث في جميع البيانات...">
+    </div>
+    <div id="totalContainer"></div>
+    <div id="content"></div>
+  </main>
+
+  <div id="mobileTotals" class="mobile-totals"></div>
+
+  <footer>
+    <p>تمت برمجة الموقع بواسطة عمر زكريا</p>
+  </footer>
+
+  <div id="modalOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal-box" id="modalBox">
+      <button class="close-modal" onclick="closeModal()">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
