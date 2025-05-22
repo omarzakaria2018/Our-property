@@ -833,7 +833,7 @@ function renderTable(data) {
     html += '<th>الإجراءات</th>';
     html += '</tr>';
 
-    Object.values(groupedData).forEach((property, index) => {
+    Object.values(groupedData).forEach((property) => {
         const status = calculateStatus(property);
         let statusClass = '';
         if (status.final === 'جاري') statusClass = 'active-status';
@@ -844,13 +844,16 @@ function renderTable(data) {
         html += '<tr>';
         orderedFields.forEach(field => {
             if (field === 'رقم الوحدة ') {
-                const unitsDisplay = property.units.join(' , ') +
-                    (property.totalUnits > 1 ? `<span class="units-count"> (${property.totalUnits} وحدات)</span>` : '');
+                const unitsDisplay = property.units.filter(Boolean).map(unit => 
+                    `<span class="unit-link" onclick="showUnitDetails('${unit}', '${property['اسم العقار']}', '${property['رقم العقد']}')">${unit}</span>`
+                ).join(' , ') +
+                (property.totalUnits > 1 ? `<span class="units-count"> (${property.totalUnits} وحدات)</span>` : '');
                 html += `<td>${unitsDisplay}</td>`;
             } else if (field === 'رقم عداد الكهرباء') {
                 const metersDisplay = property.meters.filter(Boolean).map(meter => 
                     `<span class="meter-link" onclick="showMeterDetails('${meter}', '${property['اسم العقار']}', '${property['رقم العقد']}')">${meter}</span>`
-                ).join(' , ');
+                ).join(' , ') +
+                (property.meters.length > 1 ? `<span class="meters-count">(${property.meters.length} عدادات)</span>` : '');
                 html += `<td>${metersDisplay}</td>`;
             } else if (field === 'المساحة') {
                 html += `<td>${property.totalArea ? property.totalArea.toLocaleString() : ''}</td>`;
@@ -1102,12 +1105,9 @@ function showPropertyDetails(index) {
         <span class="detail-label">رقم الوحدة:</span>
         <span class="detail-value">${allUnits.join(' , ')}${allUnits.length > 1 ? ` <span class="units-count">(${allUnits.length} وحدات)</span>` : ''}</span>
     </div>
-    `;
-    // المساحة (مجموع المساحات)
-    html += `
     <div class="detail-row">
-        <span class="detail-label">المساحة:</span>
-        <span class="detail-value">${totalArea ? totalArea.toLocaleString() : ''}</span>
+        <span class="detail-label">المساحة المجمعة:</span>
+        <span class="detail-value">${totalArea ? totalArea.toLocaleString() : '0'} م²</span>
     </div>
     `;
 
@@ -1563,24 +1563,34 @@ function showUnitDetails(unitNumber, propertyName, contractNumber) {
         p['اسم العقار'] === propertyName &&
         p['رقم العقد'] === contractNumber
     );
-    
     if (!unit) return;
 
     let html = `<div class="modal-overlay" style="display:flex;">
         <div class="modal-box">
             <button class="close-modal" onclick="closeModal()">×</button>
-            <h3>بيانات الوحدة (${unitNumber}) - ${propertyName}</h3>
+            <h3>بيانات الوحدة (${unitNumber})</h3>
             <div class="property-details">`;
-    
-    Object.entries(unit).forEach(([key, value]) => {
-        if (!value && value !== 0) return;
-        html += `
+
+    // عرض فقط الحقول المطلوبة
+    html += `
         <div class="detail-row">
-            <span class="detail-label">${key}:</span>
-            <span class="detail-value">${value}</span>
-        </div>`;
-    });
-    
+            <span class="detail-label">رقم الوحدة:</span>
+            <span class="detail-value">${unit['رقم الوحدة '] || ''}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">رقم عداد الكهرباء:</span>
+            <span class="detail-value">${unit['رقم عداد الكهرباء'] || ''}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">المساحة:</span>
+            <span class="detail-value">${unit['المساحة'] || ''}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">الارتفاع:</span>
+            <span class="detail-value">${unit['الارتفاع'] || ''}</span>
+        </div>
+    `;
+
     html += '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
 
@@ -1589,122 +1599,38 @@ function showUnitDetails(unitNumber, propertyName, contractNumber) {
     });
 }
 
-// تعديل دالة showPropertyDetailsByKey
-function showPropertyDetailsByKey(contractNumber, propertyName) {
-    const related = properties.filter(p => 
-        p['رقم العقد'] === contractNumber && 
-        p['اسم العقار'] === propertyName
-    );
-    
-    if (related.length === 0) return;
-
-    const property = related[0]; // نأخذ أول عنصر كمرجع للبيانات المشتركة
-    
-    let html = `<div class="modal-overlay" style="display:flex;">
-        <div class="modal-box">
-            <button class="close-modal" onclick="closeModal()">×</button>
-            <h3>${propertyName}</h3>
-            <div class="property-details">`;
-
-    // عرض الوحدات المرتبطة
-    const units = related.map(p => p['رقم الوحدة ']).filter(Boolean);
-    if (units.length > 0) {
-        html += `
-        <div class="detail-row">
-            <span class="detail-label">الوحدات:</span>
-            <span class="detail-value">${units.join(' , ')}${units.length > 1 ? ` (${units.length} وحدات)` : ''}</span>
-        </div>`;
-    }
-
-    // عرض باقي التفاصيل
-    Object.entries(property).forEach(([key, value]) => {
-        if (key === 'رقم الوحدة ' || !value && value !== 0) return;
-        let displayValue = value;
-        if (key === 'موقع العقار' && value) {
-            let url = value;
-            if (!url.startsWith('http')) {
-                url = `https://www.google.com/maps/search/${encodeURIComponent(url)}`;
-            }
-            displayValue = `<a href="${url}" target="_blank" class="location-link">الخريطة <i class="fas fa-map-marker-alt"></i></a>`;
-        }
-        html += `
-        <div class="detail-row">
-            <span class="detail-label">${key}:</span>
-            <span class="detail-value">${displayValue}</span>
-        </div>`;
-    });
-
-    html += `</div>
-        <div class="modal-actions">
-            <button onclick="showPrintOptions('${contractNumber}', '${propertyName}')" class="modal-action-btn print-btn">
-                <i class="fas fa-print"></i> طباعة
-            </button>
-            ${property['موقع العقار'] ? `
-                <button onclick="openLocation('${property['موقع العقار']}')" class="modal-action-btn location-btn">
-                    <i class="fas fa-map-marker-alt"></i> فتح الموقع
-                </button>` : ''}
-            <button onclick="closeModal()" class="modal-action-btn close-btn">
-                <i class="fas fa-times"></i> إغلاق
-            </button>
-        </div>
-        </div>
-    </div>`;
-
-    document.body.insertAdjacentHTML('beforeend', html);
-
-    document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
-        if (e.target === this) closeModal();
-    });
-}
-
-// عرض تفاصيل العداد
+// عرض تفاصيل العداد: فقط المشتركين
 function showMeterDetails(meterNumber, propertyName, contractNumber) {
     // البحث عن جميع العقود التي تستخدم نفس رقم العداد
     const relatedProperties = properties.filter(p => 
         p['رقم عداد الكهرباء'] === meterNumber
     );
-    
+
     let html = `<div class="modal-overlay" style="display:flex;">
         <div class="modal-box">
             <button class="close-modal" onclick="closeModal()">×</button>
-            <h3>تفاصيل عداد الكهرباء (${meterNumber})</h3>
+            <h3>المشتركين في عداد (${meterNumber})</h3>
             <div class="meter-details">`;
 
-    // عرض العقود المرتبطة بهذا العداد
-    if (relatedProperties.length > 1) {
+    // عرض العقود المرتبطة بهذا العداد فقط
+    if (relatedProperties.length > 0) {
         html += `
         <div class="detail-group shared-meter">
-            <h4><i class="fas fa-share-alt"></i> عداد مشترك بين العقود التالية:</h4>
             ${relatedProperties.map(prop => `
                 <div class="shared-contract" onclick="showPropertyDetailsByKey('${prop['رقم العقد']}', '${prop['اسم العقار']}')">
                     <div class="contract-info">
-                        <div>رقم العقد: ${prop['رقم العقد']}</div>
-                        <div>اسم العقار: ${prop['اسم العقار']}</div>
+                        <div>رقم العقد: ${prop['رقم العقد'] || ''}</div>
+                        <div>اسم العقار: ${prop['اسم العقار'] || ''}</div>
                         <div>المستأجر: ${prop['اسم المستأجر'] || 'غير محدد'}</div>
                     </div>
                     <i class="fas fa-chevron-left"></i>
                 </div>
             `).join('')}
         </div>`;
+    } else {
+        html += `<div style="text-align:center;">لا يوجد مشتركين آخرين</div>`;
     }
 
-    // عرض التفاصيل الحالية للعقد المحدد
-    const currentProperty = relatedProperties.find(p => 
-        p['رقم العقد'] === contractNumber && 
-        p['اسم العقار'] === propertyName
-    );
-
-    if (currentProperty) {
-        Object.entries(currentProperty).forEach(([key, value]) => {
-            if (!value && value !== 0) return;
-            html += `
-            <div class="detail-row">
-                <span class="detail-label">${key}:</span>
-                <span class="detail-value">${value}</span>
-            </div>`;
-        });
-    }
-    
     html += `</div></div></div>`;
     document.body.insertAdjacentHTML('beforeend', html);
 
@@ -1820,4 +1746,162 @@ function getFilteredData() {
     }
     
     return data;
+}
+
+// البحث عن العقار المطلوب
+function showPropertyDetailsByKey(contractNumber, propertyName) {
+    // البحث عن العقار المطلوب
+    const property = properties.find(p => 
+        p['رقم العقد'] === contractNumber && 
+        p['اسم العقار'] === propertyName
+    );
+    
+    if (!property) return;
+    
+    const status = calculateStatus(property);
+    let statusClass = '';
+    let badgeIcon = '';
+    
+    // تحديد تصنيف الحالة
+    switch(status.final) {
+        case 'جاري':
+            statusClass = 'active-status';
+            badgeIcon = '<i class="fas fa-check-circle"></i>';
+            break;
+        case 'منتهى':
+            statusClass = 'expired-status';
+            badgeIcon = '<i class="fas fa-times-circle"></i>';
+            break;
+        case 'على وشك':
+            statusClass = 'pending-status';
+            badgeIcon = '<i class="fas fa-exclamation-circle"></i>';
+            break;
+        case 'فارغ':
+            statusClass = 'empty-status';
+            badgeIcon = '<i class="fas fa-minus-circle"></i>';
+            break;
+    }
+
+    // حساب جميع الوحدات والمساحة المجمعة لهذا العقد/العقار
+    const related = properties.filter(
+        p => p['رقم العقد'] === contractNumber && p['اسم العقار'] === propertyName
+    );
+    const allUnits = related.map(p => p['رقم الوحدة ']).filter(Boolean);
+    const totalArea = related.reduce((sum, p) => sum + (parseFloat(p['المساحة']) || 0), 0);
+
+    let html = `<div class="modal-overlay" style="display:flex;">
+        <div class="modal-box">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h3>${property['اسم العقار'] || ''}</h3>
+            <div class="property-details">`;
+
+    // عرض رقم الوحدة (جميع الوحدات)
+    html += `
+    <div class="detail-row">
+        <span class="detail-label">رقم الوحدة:</span>
+        <span class="detail-value">${allUnits.join(' , ')}${allUnits.length > 1 ? ` <span class="units-count">(${allUnits.length} وحدات)</span>` : ''}</span>
+    </div>
+    <div class="detail-row">
+        <span class="detail-label">المساحة المجمعة:</span>
+        <span class="detail-value">${totalArea ? totalArea.toLocaleString() : '0'} م²</span>
+    </div>
+    `;
+
+    // باقي الحقول
+    const basicInfo = [
+        { label: 'رقم العقد', key: 'رقم العقد' },
+        { label: 'اسم المستأجر', key: 'اسم المستأجر' },
+        { label: 'المالك', key: 'المالك' },
+        { label: 'المدينة', key: 'المدينة' },
+        { label: 'نوع العقد', key: 'نوع العقد' },
+        { label: 'رقم عداد الكهرباء', key: 'رقم عداد الكهرباء' },
+        { label: 'الارتفاع', key: 'الارتفاع' },
+        { label: 'رقم الصك', key: 'رقم الصك' }
+    ];
+
+    basicInfo.forEach(info => {
+        if (property[info.key]) {
+            html += `
+            <div class="detail-row">
+                <span class="detail-label">${info.label}:</span>
+                <span class="detail-value">${property[info.key]}</span>
+            </div>`;
+        }
+    });
+
+    // عرض التواريخ
+    if (property['تاريخ البداية']) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">تاريخ البداية:</span>
+            <span class="detail-value" style="color: #2a4b9b;">${property['تاريخ البداية']}</span>
+        </div>`;
+    }
+
+    if (property['تاريخ النهاية']) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">تاريخ النهاية:</span>
+            <span class="detail-value" style="color: #2a4b9b;">${property['تاريخ النهاية']}</span>
+        </div>`;
+    }
+
+    // عرض الحالة
+    html += `
+    <div class="detail-row ${statusClass}">
+        <span class="detail-label">الحالة:</span>
+        <span class="detail-value">${badgeIcon} ${status.display || ''}</span>
+    </div>`;
+
+    // عرض الإجمالي
+    if (property['الاجمالى']) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">الاجمالى:</span>
+            <span class="detail-value" style="color: #2a4b9b; font-weight: bold;">
+                ${parseFloat(property['الاجمالى']).toLocaleString()} ريال
+            </span>
+        </div>`;
+    }
+
+    // عرض موقع العقار إذا كان متوفراً
+    if (property['موقع العقار']) {
+        html += `
+        <div class="detail-row">
+            <span class="detail-label">موقع العقار:</span>
+            <span class="detail-value">
+                <a href="#" onclick="openLocation('${property['موقع العقار']}'); return false;" 
+                   class="location-link">فتح الخريطة <i class="fas fa-map-marker-alt"></i></a>
+            </span>
+        </div>`;
+    }
+
+    html += `</div>
+        <div class="modal-actions">
+            <button onclick="showPrintOptions('${property['رقم العقد']}', '${property['اسم العقار']}')" 
+                    class="modal-action-btn print-btn">
+                <i class="fas fa-print"></i> طباعة
+            </button>`;
+            
+    if (property['موقع العقار']) {
+        html += `
+            <button onclick="openLocation('${property['موقع العقار']}')" 
+                    class="modal-action-btn location-btn">
+                <i class="fas fa-map-marker-alt"></i> فتح الموقع
+            </button>`;
+    }
+    
+    html += `
+            <button onclick="closeModal()" class="modal-action-btn close-btn">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+    </div></div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // إضافة مستمع لإغلاق المودال عند النقر خارجه
+    document.querySelector('.modal-overlay:last-child').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
 }
