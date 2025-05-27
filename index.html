@@ -1,103 +1,937 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>شركة السنيدي العقارية</title>
-  <link rel="icon" type="image/png" href="logo.jpeg">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التقرير المالي الشامل لمشروع بريدة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.1/css/all.min.css">
+    <style>
+        /* Import Google Font 'Tajawal' for Arabic text */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap');
+        
+        /* Apply Tajawal font and a light gray background to the body */
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f0f2f5; /* A slightly darker light gray for better contrast with cards */
+        }
+        
+        /* Enhanced Card transition effect on hover */
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 0.75rem; /* Rounded corners for cards */
+        }
+        
+        .card:hover {
+            transform: translateY(-8px); /* Lift card slightly more on hover */
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.15), 0 6px 15px -3px rgba(0, 0, 0, 0.08); /* More pronounced shadow */
+        }
+        
+        /* Styling for expense cards to ensure consistent height and layout */
+        .expenses-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.75rem; /* Rounded corners for expense cards */
+            border: 1px solid #e2e8f0; /* Subtle border */
+        }
+        
+        .expenses-card-body {
+            flex: 1; /* Allows the body to take available space */
+        }
+        
+        /* Progress bar styling */
+        .progress-bar {
+            height: 10px; /* Slightly thicker progress bar */
+            border-radius: 5px; /* More rounded */
+            background-color: #e2e8f0; /* Tailwind's gray-200 */
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-value {
+            height: 100%;
+            border-radius: 5px; /* More rounded */
+        }
+        
+        /* Toggle details button styling */
+        .details-toggle {
+            cursor: pointer;
+            padding: 0.5rem 0; /* Add some vertical padding */
+            display: flex; /* Ensure flex for alignment */
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        /* Content for expandable details, initially hidden */
+        .details-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease-in-out; /* Smoother transition for expand/collapse */
+        }
+        
+        .details-content.open {
+            max-height: 2000px; /* Large enough value to show all content when open */
+            padding-top: 0.75rem; /* Add padding when open */
+        }
+        
+        /* Print styles for better readability when printed */
+        @media print {
+            .page-break {
+                page-break-before: always; /* Force page break before elements with this class */
+            }
+            
+            .no-print {
+                display: none; /* Hide elements with this class when printing */
+            }
+            
+            body {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background-color: #fff; /* White background for printing */
+            }
+            
+            .container {
+                width: 100%;
+                max-width: none; /* Remove max-width constraint for printing */
+            }
+        }
+        
+        /* Styling for total expense amount */
+        .expense-total {
+            font-weight: bold;
+            color: #1a202c; /* Darker gray for emphasis */
+            font-size: 1.5rem; /* Larger font size */
+        }
+        
+        /* Striped table rows */
+        .table-striped tr:nth-child(even) {
+            background-color: #f7fafc; /* Tailwind's gray-50 */
+        }
+        
+        /* Sticky header for tables (not used in this specific table, but good to keep) */
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            background-color: #fff;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Custom styling for the AI analysis button */
+        #analyze-button {
+            background-image: linear-gradient(to right, #3b82f6 0%, #6366f1 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 9999px; /* Fully rounded */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #analyze-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        #analyze-button i {
+            margin-left: 8px; /* Space between text and icon */
+        }
+
+        /* Styling for analysis results container */
+        #analysis-results {
+            background-color: #e0f2fe; /* Light blue background */
+            border-left: 5px solid #2196f3; /* Blue left border */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        #loading-indicator {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        #analysis-content {
+            line-height: 1.8; /* Improve readability of text */
+            color: #2d3748;
+        }
+        #analysis-content h1, #analysis-content h2, #analysis-content h3, #analysis-content h4 {
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #2c5282; /* Darker blue for headings */
+        }
+        #analysis-content p {
+            margin-bottom: 0.5rem;
+        }
+        #analysis-content ul {
+            list-style-type: disc;
+            margin-right: 1.5rem;
+            padding-right: 0;
+        }
+        #analysis-content li {
+            margin-bottom: 0.25rem;
+        }
+    </style>
 </head>
-<body>
-  <header>
-    <div class="header-row">
-      <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <i class="fas fa-bars"></i>
-      </button>
-      <div class="header-section header-countries">
-        <div class="countries-container">
-          <button class="clear-country-filter" style="display: none"><i class="fas fa-times"></i> إزالة الفلتر</button>
-          <div id="countryButtons"></div>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-4xl font-extrabold text-gray-900 mb-2">التقرير المالي الشامل لمشروع بريدة</h1>
+                    <p class="text-gray-700 text-lg">تقرير شامل للعهد والمصروفات والمتبقي من الميزانية</p>
+                </div>
+                <div class="mt-6 md:mt-0">
+                    <div class="bg-blue-50 rounded-xl p-4 text-center shadow-inner">
+                        <p class="text-gray-600 text-md">تاريخ التقرير</p>
+                        <p class="text-gray-800 font-bold text-xl" id="report-date">--/--/----</p>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="header-section header-title">
-        <h1>شركة السنيدي العقارية</h1>
-      </div>
-      <div class="header-section header-actions">
-        <div class="view-toggle">
-          <button id="table-btn" onclick="toggleView('table')"><i class="fas fa-table"></i> جدول</button>
-          <button id="cards-btn" onclick="toggleView('cards')"><i class="fas fa-th-large"></i> بطاقات</button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="summary-cards-container">
+            </div>
+        <div class="grid grid-cols-1 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-yellow-500 card">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-gray-600 text-sm">أكبر بند مصروفات</p>
+                        <h2 class="text-xl font-bold text-gray-800" id="largest-expense-name"></h2>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-full">
+                        <i class="fas fa-hard-hat text-yellow-500 text-xl"></i>
+                    </div>
+                </div>
+                <p class="text-gray-500 mt-3 text-sm"><span id="largest-expense-amount"></span> <span class="font-bold">(<span id="largest-expense-percentage"></span>%)</span></p>
+            </div>
         </div>
-        <button id="exportExcel" class="export-btn" onclick="exportToExcel()">
-          <i class="fas fa-file-excel"></i> تصدير Excel
-        </button>
-        <div id="headerFilters" class="header-filters"></div>
-      </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">تحليل مالي بالذكاء الاصطناعي</h3>
+            <button id="analyze-button" class="group">
+                تحليل مالي شامل <i class="fas fa-magic transition-transform duration-300 group-hover:rotate-12"></i>
+            </button>
+            <div id="analysis-results" class="mt-8 p-4 bg-blue-50 rounded-xl text-gray-800 hidden">
+                <p class="text-center text-gray-600" id="loading-indicator">جاري تحليل البيانات... <i class="fas fa-spinner fa-spin"></i></p>
+                <div id="analysis-content" class="prose max-w-none">
+                    </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">جميع بنود المصروفات</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="expense-categories-container">
+                </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">تفاصيل العهد المالية</h3>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full bg-white table-striped">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="py-3 px-4 border-b text-right text-gray-700 font-semibold">رقم العهدة</th>
+                            <th class="py-3 px-4 border-b text-right text-gray-700 font-semibold">التاريخ</th>
+                            <th class="py-3 px-4 border-b text-right text-gray-700 font-semibold">القيمة (ر.س)</th>
+                            <th class="py-3 px-4 border-b text-right text-gray-700 font-semibold">الوصف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="custody-details-body">
+                        </tbody>
+                    <tfoot class="bg-gray-100">
+                        <tr>
+                            <td class="py-3 px-4 border-t border-gray-300 font-bold text-gray-800" colspan="2">المجموع</td>
+                            <td class="py-3 px-4 border-t border-gray-300 font-bold text-gray-800" id="total-custody-footer">0.00</td>
+                            <td class="py-3 px-4 border-t border-gray-300"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-3">ملخص التقرير</h3>
+                    <p class="text-gray-700 text-lg">إجمالي العهد: <span class="font-bold text-blue-600" id="footer-total-custody">0.00 ر.س</span></p>
+                    <p class="text-gray-700 text-lg">إجمالي المصروفات: <span class="font-bold text-red-600" id="footer-total-expenses">0.00 ر.س</span></p>
+                    <p class="text-gray-700 text-lg">المتبقي: <span class="font-bold text-green-600" id="footer-remaining-budget">0.00 ر.س</span></p>
+                </div>
+                <div class="mt-6 md:mt-0 text-center">
+                    <p class="text-gray-600 text-md">تم إعداد التقرير في</p>
+                    <p class="text-xl font-bold text-gray-800" id="report-footer-date">--/--/----</p>
+                </div>
+            </div>
+        </div>
     </div>
-  </header>
 
-  <!-- Mobile Menu -->
-  <div class="menu-overlay" id="menuOverlay"></div>
-  <div class="mobile-menu" id="mobileMenu">
-    <div class="mobile-menu-header">
-      <h3>القائمة</h3>
-      <button class="mobile-menu-close" id="mobileMenuClose">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-    <div class="mobile-menu-content">
-      <ol class="mobile-dropdown-list">
-        <li>
-          <button id="mobile-country-btn"><i class="fas fa-globe"></i> المدن <span class="badge" id="countryCount"></span></button>
-          <ul class="dropdown-sub" id="mobile-country-list"></ul>
-        </li>
-        <li>
-          <button id="mobile-property-btn"><i class="fas fa-building"></i> العقارات <span class="badge" id="propertyCount"></span></button>
-        </li>
-        <li>
-          <button id="mobile-filter-btn"><i class="fas fa-filter"></i> الفلتر <span class="badge" id="filterCount"></span></button>
-          <ul class="dropdown-sub" id="mobile-filter-list"></ul>
-        </li>
-        <li>
-          <button id="mobile-view-btn"><i class="fas fa-eye"></i> طريقة العرض</button>
-          <ul class="dropdown-sub" id="mobile-view-list"></ul>
-        </li>
-      </ol>
-      <div id="mobileTotals" class="mobile-totals"></div>
-    </div>
-  </div>
+    <script>
+        // Placeholder for your JSON data file. In a real scenario, this would be a separate file (e.g., data.json).
+        // For demonstration, it's embedded here.
+        const financialData = {
+            "summary": {
+                "totalCustody": 1800000.00, // Updated total custody
+                "totalExpenses": 1729040.11, // New Grand Total from user input
+                "remainingBudget": 70959.89, // New remaining budget from user input
+                "expensePercentage": ((1729040.11 / 1800000.00) * 100).toFixed(1), // Recalculated
+                "remainingPercentage": ((70959.89 / 1800000.00) * 100).toFixed(1), // Recalculated
+                "largestExpense": "بناء وخرسانة",
+                "largestExpenseAmount": 946117.00,
+                "largestExpensePercentage": ((946117.00 / 1729040.11) * 100).toFixed(1) // Recalculated
+            },
+            "expenseCategories": [
+                {
+                    "name": "جرافه (لودار)",
+                    "value": 8630.00 + 8860.00 + 2300.00 + 500.00, // Sum of details
+                    "percentage": (((8630.00 + 8860.00 + 2300.00 + 500.00) / 1729040.11) * 100).toFixed(1),
+                    "color": "fuchsia",
+                    "icon": "fa-truck-monster",
+                    "details": [
+                        {"description": "دفان + شيول", "amount": 8630.00},
+                        {"description": "شغل شيول", "amount": 8860.00},
+                        {"description": "سند قبض الميده وونش رفع حديد اعمال صبه", "amount": 2300.00},
+                        {"description": "شيول", "amount": 500.00}
+                    ]
+                },
+                {
+                    "name": "حلق ابواب",
+                    "value": 4816.00,
+                    "percentage": ((4816 / 1729040.11) * 100).toFixed(1),
+                    "color": "amber",
+                    "icon": "fa-door-closed",
+                    "details": []
+                },
+                {
+                    "name": "ارضيات",
+                    "value": 20570.00,
+                    "percentage": ((20570 / 1729040.11) * 100).toFixed(1),
+                    "color": "lime",
+                    "icon": "fa-rug",
+                    "details": [
+                        {"description": "ارضيات بورسلان60*60", "amount": 5580.00},
+                        {"description": "اعمال قطوعة أرضية وخزان مع الدفان", "amount": 3500.00},
+                        {"description": "انترلوك", "amount": 90.00},
+                        {"description": "ترصيص ارضية القواعد", "amount": 500.00},
+                        {"description": "جروات", "amount": 45.00},
+                        {"description": "شبك ارضيات", "amount": 6300.00},
+                        {"description": "غراء فيتونيت+فواصل سيراميك", "amount": 1655.00},
+                        {"description": "نايلون", "amount": 2900.00}
+                    ]
+                },
+                {
+                    "name": "اسقف",
+                    "value": 102400.00,
+                    "percentage": ((102400 / 1729040.11) * 100).toFixed(1),
+                    "color": "purple",
+                    "icon": "fa-grip-lines",
+                    "details": [
+                        {"description": "دفعة سقف الميزان", "amount": 20000.00},
+                        {"description": "سند قبض الضيافة دفعة لصالة 28 اعمال المروحية للسقف", "amount": 1200.00},
+                        {"description": "سند قبض الضيافة دفعة لصالة 28 السقف العلوي", "amount": 40000.00},
+                        {"description": "سند قبض دفعة السقف للصالة", "amount": 40000.00},
+                        {"description": "سند قبض عمل السقف المروحية", "amount": 1200.00}
+                    ]
+                },
+                {
+                    "name": "اعمال جبس",
+                    "value": 6800.00,
+                    "percentage": ((6800 / 1729040.11) * 100).toFixed(1),
+                    "color": "blue-gray",
+                    "icon": "fa-palette",
+                    "details": [
+                        {"description": "دفعة أولى للجبس", "amount": 2000.00},
+                        {"description": "دفعه اخيره للجبس", "amount": 2200.00},
+                        {"description": "جبس", "amount": 2600.00}
+                    ]
+                },
+                {
+                    "name": "اعمال كهرباء",
+                    "value": 85677.00,
+                    "percentage": ((85677 / 1729040.11) * 100).toFixed(1),
+                    "color": "yellow",
+                    "icon": "fa-bolt",
+                    "details": [
+                        {"description": "ادوات كهرباء", "amount": 16378.00},
+                        {"description": "حواله دفعة للكهربائي", "amount": 2000.00},
+                        {"description": "حواله دفعه للكهربائي طارق", "amount": 1500.00},
+                        {"description": "دفعة للكهربائي", "amount": 2000.00},
+                        {"description": "دفعة للكهربائي", "amount": 3250.00},
+                        {"description": "دفعه للكهربائي 1000 ريال من اصل 11500 وذلك للقطعه 30 و 28 تسليم تشطيب الا داخل صالات عظم", "amount": 1000.00},
+                        {"description": "سلك كهرباء", "amount": 23106.00},
+                        {"description": "كهرباء", "amount": 32610.00},
+                        {"description": "كيبل نحاس+كيبل 25 ملي خط كامل", "amount": 1832.00},
+                        {"description": "حوالة الى طارق دفعة للكهربائي", "amount": 2000.00}
+                    ]
+                },
+                {
+                    "name": "اعمال لياسة",
+                    "value": 57540.00,
+                    "percentage": ((57540 / 1729040.11) * 100).toFixed(1),
+                    "color": "pink",
+                    "icon": "fa-paint-roller",
+                    "details": [
+                        {"description": "حواله الى المليس محمد رمضان", "amount": 16235.00},
+                        {"description": "حواله دفعة أخيرة للمليس", "amount": 1735.00},
+                        {"description": "حواله قيمة لياسة خزانين صالات", "amount": 850.00},
+                        {"description": "دفعة للمليس", "amount": 26460.00},
+                        {"description": "رمل تليس", "amount": 5600.00},
+                        {"description": "فلين هوردي", "amount": 2160.00},
+                        {"description": "للمليس 3000", "amount": 3000.00},
+                        {"description": "اعمال لياسة", "amount": 1500.00}
+                    ]
+                },
+                {
+                    "name": "المونيوم",
+                    "value": 5000.00,
+                    "percentage": ((5000 / 1729040.11) * 100).toFixed(1),
+                    "color": "sky",
+                    "icon": "fa-window-frame",
+                    "details": []
+                },
+                {
+                    "name": "برميل",
+                    "value": 1100.00,
+                    "percentage": ((1100 / 1729040.11) * 100).toFixed(1),
+                    "color": "gray",
+                    "icon": "fa-barrel-water",
+                    "details": []
+                },
+                {
+                    "name": "بلاط",
+                    "value": 80963.00,
+                    "percentage": ((80963 / 1729040.11) * 100).toFixed(1),
+                    "color": "red",
+                    "icon": "fa-th",
+                    "details": [
+                        {"description": "بورسلان+خزف", "amount": 13585.00},
+                        {"description": "حجر ديكور", "amount": 24078.00},
+                        {"description": "دفعة المبلط", "amount": 8000.00},
+                        {"description": "دفعه للمبلط", "amount": 4000.00},
+                        {"description": "دفعة للمبلط", "amount": 2500.00},
+                        {"description": "جدران سعودي+وطني+غراء+رخام درج", "amount": 28800.00}
+                    ]
+                },
+                {
+                    "name": "بناء وخرسانة",
+                    "value": 946117.00,
+                    "percentage": ((946117 / 1729040.11) * 100).toFixed(1),
+                    "color": "blue",
+                    "icon": "fa-hard-hat",
+                    "details": [
+                        {"description": "اسمنت", "amount": 27080.00},
+                        {"description": "بسكوت خرسانه", "amount": 1875.00},
+                        {"description": "بطحاء", "amount": 7800.00},
+                        {"description": "بلاط", "amount": 250.00},
+                        {"description": "بلك", "amount": 18247.00},
+                        {"description": "بلك اسمنتي", "amount": 1950.00},
+                        {"description": "تسوية الميده الارض", "amount": 850.00},
+                        {"description": "حديد", "amount": 410637.00},
+                        {"description": "خرسانه", "amount": 278495.00},
+                        {"description": "دفعة للمليس", "amount": 3000.00},
+                        {"description": "رمل", "amount": 6825.00},
+                        {"description": "رمل", "amount": 2000.00},
+                        {"description": "رمل مخلوط", "amount": 950.00},
+                        {"description": "رمل واسمنت", "amount": 510.00},
+                        {"description": "رمل وشيول", "amount": 4400.00},
+                        {"description": "سند قبض دفعة الميده الصالة 28", "amount": 30000.00},
+                        {"description": "سند قبض دفعة أولى بعد صبة القواعد", "amount": 30000.00},
+                        {"description": "سند قبض دفعة ثانية بعد صبة الميده", "amount": 30000.00},
+                        {"description": "سند قبض سلك ومسمار", "amount": 6000.00},
+                        {"description": "سند قبض مؤسسة الضيافة دفعة للقواعد", "amount": 38400.00},
+                        {"description": "شيول ورمل ودفان ميده", "amount": 9450.00},
+                        {"description": "عمال حداده للشينكو الخارجي", "amount": 400.00},
+                        {"description": "عمل استكر", "amount": 70.00},
+                        {"description": "عمل سور شينكو سند قبض", "amount": 8000.00},
+                        {"description": "فلين هوردي", "amount": 22070.00},
+                        {"description": "قطوعة صندوق القواعد", "amount": 2400.00},
+                        {"description": "كاميرا", "amount": 758.00},
+                        {"description": "هوردي", "amount": 1750.00},
+                        {"description": "صبة الارضيه", "amount": 1500.00},
+                        {"description": "حديد فواصل بين الاحجار", "amount": 450.00}
+                    ]
+                },
+                {
+                    "name": "تركبيات السلامه",
+                    "value": 56500.00,
+                    "percentage": ((56500 / 1729040.11) * 100).toFixed(1),
+                    "color": "orange",
+                    "icon": "fa-shield-alt",
+                    "details": [
+                        {"description": "الدفعة الثالثة من قيمة عقد أعمال تركيبات السلامة للقطعة رقم 28 والقطعة رقم 30", "amount": 10000.00},
+                        {"description": "الدفعة الثانية من قيمة عقد أعمال تركيبات السلامة للقطعة رقم 28 والقطعة رقم 30", "amount": 15000.00},
+                        {"description": "دفع مقدمة من عقد تركيبات السلامة", "amount": 15000.00},
+                        {"description": "الدفعة الخامسة من عقد تركيبات أعمال السلامة للقطعة رقم 28 والقطعة رقم 30", "amount": 16500.00}
+                    ]
+                },
+                {
+                    "name": "دفعات وحوالات متنوعه",
+                    "value": 166575.00,
+                    "percentage": ((166575 / 1729040.11) * 100).toFixed(1),
+                    "color": "green",
+                    "icon": "fa-exchange-alt",
+                    "details": [
+                        {"description": "حوالات اخري", "amount": 825.00},
+                        {"description": "حواله الى مؤسسة عبد الرحمن عبيد", "amount": 3750.00},
+                        {"description": "سند قبض الضيافة الدفعة الاخيرة الصالة 30", "amount": 48000.00},
+                        {"description": "سند قبض الضيافة دفعة بناء الصالة 30", "amount": 40000.00},
+                        {"description": "سند قبض الضيافة دفعة لصالة 28", "amount": 20000.00},
+                        {"description": "سند قبض الضيافة دفعة لصالة 28 الدفعة الاخيرة", "amount": 54000.00}
+                    ]
+                },
+                {
+                    "name": "دهان",
+                    "value": 11723.00,
+                    "percentage": ((11723 / 1729040.11) * 100).toFixed(1),
+                    "color": "lime",
+                    "icon": "fa-paint-brush",
+                    "details": [
+                        {"description": "دفعه اول للدهان", "amount": 2000.00},
+                        {"description": "دهانات", "amount": 2918.00},
+                        {"description": "بلاستك داخلي خارجي ابيض 25 كيلو 777", "amount": 4255.00},
+                        {"description": "معجون دهان+رول+سكين", "amount": 550.00},
+                        {"description": "دفعة للدهان", "amount": 2000.00}
+                    ]
+                },
+                {
+                    "name": "رافعة",
+                    "value": 800.00,
+                    "percentage": ((800 / 1729040.11) * 100).toFixed(1),
+                    "color": "gray",
+                    "icon": "fa-crane",
+                    "details": [
+                        {"description": "ايجار كرين", "amount": 650.00},
+                        {"description": "ايجار رافعة", "amount": 150.00}
+                    ]
+                },
+                {
+                    "name": "رواتب عماله",
+                    "value": 5200.00,
+                    "percentage": ((5200 / 1729040.11) * 100).toFixed(1),
+                    "color": "violet",
+                    "icon": "fa-users",
+                    "details": [
+                        {"description": "حواله راتب عامل رش", "amount": 1200.00},
+                        {"description": "راتب حارس", "amount": 4000.00}
+                    ]
+                },
+                {
+                    "name": "سباكة",
+                    "value": 34717.00,
+                    "percentage": ((34717 / 1729040.11) * 100).toFixed(1),
+                    "color": "cyan",
+                    "icon": "fa-faucet",
+                    "details": [
+                        {"description": "بسكت", "amount": 421.00},
+                        {"description": "حواله دفعة ثانية للسباك محمد بلح", "amount": 3000.00},
+                        {"description": "حواله دفعة للسباك محمد بلح", "amount": 1000.00},
+                        {"description": "دفعة للسباك", "amount": 7000.00},
+                        {"description": "سباكة", "amount": 22760.00},
+                        {"description": "ديسك صنفره+ سيك بوند (سباكة)", "amount": 245.00},
+                        {"description": "غطاس اليحي", "amount": 291.00}
+                    ]
+                },
+                {
+                    "name": "طوب",
+                    "value": 44251.00,
+                    "percentage": ((44251 / 1729040.11) * 100).toFixed(1),
+                    "color": "indigo",
+                    "icon": "fa-cube",
+                    "details": [
+                        {"description": "بركاني مشرشر", "amount": 6687.00},
+                        {"description": "بلك", "amount": 1300.00},
+                        {"description": "بلك بركاني", "amount": 26754.00},
+                        {"description": "بلك عادي", "amount": 1655.00},
+                        {"description": "طابوق", "amount": 7855.00}
+                    ]
+                },
+                {
+                    "name": "عتالة",
+                    "value": 1150.00,
+                    "percentage": ((1150 / 1729040.11) * 100).toFixed(1),
+                    "color": "stone",
+                    "icon": "fa-people-carry-box",
+                    "details": [
+                        {"description": "رفع حديد", "amount": 500.00},
+                        {"description": "رفع حديد للملحق العلوي", "amount": 350.00},
+                        {"description": "رفع رمل واسمنت", "amount": 300.00}
+                    ]
+                },
+                {
+                    "name": "عزل",
+                    "value": 65230.00,
+                    "percentage": ((65230 / 1729040.11) * 100).toFixed(1),
+                    "color": "teal",
+                    "icon": "fa-snowflake",
+                    "details": [
+                        {"description": "حواله لمؤسسة عازل المدينة لمواد البنا", "amount": 2110.00},
+                        {"description": "دفعة عزل سطح", "amount": 25000.00},
+                        {"description": "دفعه اخيره للعزل", "amount": 3520.00},
+                        {"description": "عزل تحت القواعد", "amount": 1150.00},
+                        {"description": "عمال تنفيذ عزل خزان", "amount": 4320.00},
+                        {"description": "مواد عزل", "amount": 610.00},
+                        {"description": "دفعة اعمال عزل", "amount": 28000.00},
+                        {"description": "عزل", "amount": 520.00}
+                    ]
+                },
+                {
+                    "name": "فحص تربه",
+                    "value": 600.00,
+                    "percentage": ((600 / 1729040.11) * 100).toFixed(1),
+                    "color": "gray",
+                    "icon": "fa-flask",
+                    "details": [
+                        {"description": "حواله قيمة تقرير فحص تربه", "amount": 300.00},
+                        {"description": "حواله قيمة فحص تربه قطعه 30", "amount": 300.00}
+                    ]
+                },
+                {
+                    "name": "ماء",
+                    "value": 6300.00,
+                    "percentage": ((6300 / 1729040.11) * 100).toFixed(1),
+                    "color": "sky",
+                    "icon": "fa-tint",
+                    "details": [
+                        {"description": "وايت ماء", "amount": 6300.00}
+                    ]
+                },
+                {
+                    "name": "متنوعه",
+                    "value": 730.00,
+                    "percentage": ((730 / 1729040.11) * 100).toFixed(1),
+                    "color": "gray",
+                    "icon": "fa-box-open",
+                    "details": [
+                        {"description": "سند قبض", "amount": 80.00},
+                        {"description": "متنوعة", "amount": 650.00}
+                    ]
+                },
+                {
+                    "name": "مخلفات",
+                    "value": 1200.00,
+                    "percentage": ((1200 / 1729040.11) * 100).toFixed(1),
+                    "color": "red",
+                    "icon": "fa-trash-alt",
+                    "details": [
+                        {"description": "نقل مخلفات تريلا", "amount": 1200.00}
+                    ]
+                },
+                {
+                    "name": "نظافة",
+                    "value": 1212.00,
+                    "percentage": ((1212 / 1729040.11) * 100).toFixed(1),
+                    "color": "green",
+                    "icon": "fa-broom",
+                    "details": [
+                        {"description": "تنظيف شغل يومين", "amount": 200.00},
+                        {"description": "مكنسة", "amount": 12.00},
+                        {"description": "تنظيف المبنى", "amount": 1000.00}
+                    ]
+                },
+                {
+                    "name": "نقليات",
+                    "value": 1500.00,
+                    "percentage": ((1500 / 1729040.11) * 100).toFixed(1),
+                    "color": "orange",
+                    "icon": "fa-truck-moving",
+                    "details": [
+                        {"description": "نقليات العريفي", "amount": 1500.00}
+                    ]
+                },
+                {
+                    "name": "سقالة",
+                    "value": 80.00,
+                    "percentage": ((80 / 1729040.11) * 100).toFixed(1),
+                    "color": "yellow",
+                    "icon": "fa-tools",
+                    "details": [
+                        {"description": "سقاله 9 دور", "amount": 80.00}
+                    ]
+                }
+            ],
+            "custodyDetails": [
+                {"id": "عهدة 1", "date": "07/06/2024", "value": 50000.00, "description": "عهدة 1 الى عبدالوهاب"},
+                {"id": "عهدة 2", "date": "10/06/2024", "value": 100000.00, "description": "عهدة 2 الى عبدالوهاب"},
+                {"id": "عهدة 3", "date": "27/06/2024", "value": 100000.00, "description": "عهدة 3 الى عبدالوهاب"},
+                {"id": "عهدة 4", "date": "08/07/2024", "value": 100000.00, "description": "عهدة 4 الى عبدالوهاب"},
+                {"id": "عهدة 6", "date": "05/08/2024", "value": 150000.00, "description": "دفعة6 الى عبدالوهاب"},
+                {"id": "عهدة 5", "date": "21/08/2024", "value": 200000.00, "description": "دفعة5 الى عبدالوهاب"},
+                {"id": "عهدة 7", "date": "03/09/2024", "value": 150000.00, "description": "دفعة7 الى عبدالوهاب"},
+                {"id": "عهدة 8", "date": "12/09/2024", "value": 100000.00, "description": "دفعة8 الى عبدالوهاب"},
+                {"id": "عهدة 9", "date": "12/10/2024", "value": 100000.00, "description": "دفعة13 الى عبدالوهاب"},
+                {"id": "عهدة 10", "date": "27/10/2024", "value": 100000.00, "description": "دفعة9 الى عبدالوهاب"},
+                {"id": "عهدة 11", "date": "05/11/2024", "value": 150000.00, "description": "دفعة10 الى عبدالوهاب"},
+                {"id": "عهدة 12", "date": "07/12/2024", "value": 100000.00, "description": "دفعة11 الى عبدالوهاب"},
+                {"id": "عهدة 13", "date": "08/03/2025", "value": 50000.00, "description": "دفعة12 الى عبدالوهاب"},
+                {"id": "عهدة 14", "date": "24/03/2025", "value": 50000.00, "description": "دفعة14 الى عبدالوهاب"},
+                {"id": "عهدة 15", "date": "08/04/2025", "value": 50000.00, "description": "دفعة15 الى عبدالوهاب"},
+                {"id": "عهدة 16", "date": "21/04/2025", "value": 50000.00, "description": "دفعة16 الى عبدالوهاب"},
+                {"id": "عهدة 17", "date": "26/04/2025", "value": 50000.00, "description": "دفعة17 الى عبدالوهاب"},
+                {"id": "عهدة 18", "date": "10/05/2025", "value": 100000.00, "description": "دفعة18 الى عبدالوهاب"},
+                {"id": "عهدة 19", "date": "22/05/2025", "value": 50000.00, "description": "دفعة19 الى عبدالوهاب"}
+            ]
+        };
 
-  <aside id="sidebar">
-    <button class="hide-sidebar-btn" onclick="toggleSidebar()" style="display:none;">إخفاء القائمة</button>
-    <div class="sidebar-header">
-      <h3>العقارات</h3>
-    </div>
-    <input type="text" id="propertySearch" placeholder="بحث في العقارات...">
-    <div id="propertyList"></div>
-  </aside>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set the current date for the report header and footer
+            const now = new Date();
+            const dateString = now.toLocaleDateString('ar-SA', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('report-date').textContent = dateString;
+            document.getElementById('report-footer-date').textContent = dateString;
 
-  <main>
-    <div id="searchSection">
-      <input type="text" id="globalSearch" placeholder="بحث في جميع البيانات...">
-    </div>
-    <div id="totalContainer"></div>
-    <div id="content"></div>
-  </main>
+            // Function to format currency using Western Arabic numerals (e.g., 1,234,567.89)
+            function formatCurrency(amount) {
+                return amount.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' ر.س';
+            }
 
-  <div id="mobileTotals" class="mobile-totals"></div>
+            // Function to populate summary cards
+            function populateSummaryCards(summary) {
+                const container = document.getElementById('summary-cards-container');
+                container.innerHTML = `
+                    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500 card">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-600 text-sm">إجمالي العهد</p>
+                                <h2 class="text-3xl font-bold text-gray-800">${formatCurrency(summary.totalCustody)}</h2>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-money-bill-wave text-blue-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mt-3 text-sm">عدد العهد: ${financialData.custodyDetails.length}</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-red-500 card">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-600 text-sm">إجمالي المصروفات</p>
+                                <h2 class="text-3xl font-bold text-gray-800">${formatCurrency(summary.totalExpenses)}</h2>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-full">
+                                <i class="fas fa-file-invoice-dollar text-red-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mt-3 text-sm">نسبة الصرف: <span class="font-bold">${summary.expensePercentage}%</span></p>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-green-500 card">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-gray-600 text-sm">المتبقي</p> <h2 class="text-3xl font-bold text-gray-800">${formatCurrency(summary.remainingBudget)}</h2>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-wallet text-green-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 mt-3 text-sm">نسبة المتبقي: <span class="font-bold">${summary.remainingPercentage}%</span></p>
+                    </div>
+                `;
+                // Populate the largest expense card separately as it's outside the main grid
+                document.getElementById('largest-expense-name').textContent = summary.largestExpense;
+                document.getElementById('largest-expense-amount').textContent = formatCurrency(summary.largestExpenseAmount);
+                document.getElementById('largest-expense-percentage').textContent = summary.largestExpensePercentage;
+            }
 
-  <footer>
-    <p>تمت برمجة الموقع بواسطة عمر زكريا</p>
-  </footer>
+            // Function to populate expense categories
+            function populateExpenseCategories(categories) {
+                const container = document.getElementById('expense-categories-container');
+                container.innerHTML = ''; // Clear existing content
 
-  <div id="modalOverlay" class="modal-overlay" style="display:none;">
-    <div class="modal-box" id="modalBox">
-      <button class="close-modal" onclick="closeModal()">×</button>
-      <div id="modalContent"></div>
-    </div>
-  </div>
+                // Define a richer set of colors for better visual distinction
+                const colorPalette = [
+                    'blue', 'green', 'purple', 'yellow', 'pink', 'red', 'indigo', 'orange', 'teal',
+                    'cyan', 'lime', 'fuchsia', 'rose', 'emerald', 'sky', 'violet', 'amber', 'stone'
+                ];
 
-  <script src="script.js"></script>
+                categories.forEach((category, index) => {
+                    // Use the color defined in the JSON data, or fallback to the palette
+                    const colorClass = category.color || colorPalette[index % colorPalette.length];
+                    const detailsHtml = category.details.map(detail => `<p>${detail.description}: ${formatCurrency(detail.amount)}</p>`).join('');
+
+                    const cardHtml = `
+                        <div class="card bg-white rounded-xl shadow-lg p-6 expenses-card border-t-4 border-${colorClass}-500">
+                            <div class="expenses-card-body">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="text-xl font-semibold text-${colorClass}-700 flex items-center">
+                                        <i class="fas ${category.icon} text-${colorClass}-500 ml-2"></i> ${category.name}
+                                    </h4>
+                                    <div class="bg-${colorClass}-100 text-${colorClass}-800 font-bold rounded-full px-4 py-1 text-sm shadow-sm">
+                                        ${category.percentage}%
+                                    </div>
+                                </div>
+                                <p class="expense-total mb-3">${formatCurrency(category.value)}</p>
+                                <div class="progress-bar">
+                                    <div class="progress-value bg-${colorClass}-500" style="width: ${category.percentage}%"></div>
+                                </div>
+                                ${category.details.length > 0 ? `
+                                <div class="mt-5">
+                                    <div class="details-toggle flex justify-between items-center text-${colorClass}-600 hover:text-${colorClass}-800 font-semibold">
+                                        <span class="text-base">عرض التفاصيل</span>
+                                        <i class="fas fa-chevron-down text-sm transition-transform duration-300"></i>
+                                    </div>
+                                    <div class="details-content mt-3">
+                                        <div class="text-base text-gray-700 space-y-2 leading-relaxed">
+                                            ${detailsHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHtml);
+                });
+
+                // Re-attach toggle event listeners after content is added
+                attachDetailsToggleListeners();
+            }
+
+            // Function to populate custody details table
+            function populateCustodyDetails(custodyData) {
+                const tbody = document.getElementById('custody-details-body');
+                tbody.innerHTML = ''; // Clear existing content
+                let totalCustodyValue = 0;
+
+                custodyData.forEach(item => {
+                    const rowHtml = `
+                        <tr>
+                            <td class="py-3 px-4 border-b text-gray-700">${item.id}</td>
+                            <td class="py-3 px-4 border-b text-gray-700">${item.date}</td>
+                            <td class="py-3 px-4 border-b text-gray-700">${formatCurrency(item.value)}</td>
+                            <td class="py-3 px-4 border-b text-gray-700">${item.description}</td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', rowHtml);
+                    totalCustodyValue += item.value;
+                });
+
+                document.getElementById('total-custody-footer').textContent = formatCurrency(totalCustodyValue);
+            }
+
+            // Function to populate footer summary
+            function populateFooterSummary(summary) {
+                document.getElementById('footer-total-custody').textContent = formatCurrency(summary.totalCustody);
+                document.getElementById('footer-total-expenses').textContent = formatCurrency(summary.totalExpenses);
+                document.getElementById('footer-remaining-budget').textContent = formatCurrency(summary.remainingBudget);
+            }
+
+            // Function to attach details toggle listeners
+            function attachDetailsToggleListeners() {
+                const toggles = document.querySelectorAll('.details-toggle');
+                toggles.forEach(toggle => {
+                    toggle.removeEventListener('click', toggleDetails); // Remove existing to prevent duplicates
+                    toggle.addEventListener('click', toggleDetails);
+                });
+            }
+
+            // Toggle details functionality
+            function toggleDetails() {
+                const content = this.nextElementSibling;
+                content.classList.toggle('open');
+                
+                const icon = this.querySelector('i');
+                if (content.classList.contains('open')) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-up');
+                    this.querySelector('span').textContent = 'إخفاء التفاصيل';
+                } else {
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                    this.querySelector('span').textContent = 'عرض التفاصيل';
+                }
+            }
+
+            // Initial population of data from JSON
+            populateSummaryCards(financialData.summary);
+            populateExpenseCategories(financialData.expenseCategories);
+            populateCustodyDetails(financialData.custodyDetails);
+            populateFooterSummary(financialData.summary);
+
+            // Gemini API Integration Logic
+            const analyzeButton = document.getElementById('analyze-button');
+            const analysisResultsDiv = document.getElementById('analysis-results');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const analysisContent = document.getElementById('analysis-content');
+
+            analyzeButton.addEventListener('click', async () => {
+                // Show loading indicator and analysis section
+                analysisResultsDiv.classList.remove('hidden');
+                loadingIndicator.classList.remove('hidden');
+                analysisContent.innerHTML = ''; // Clear previous content
+
+                // Gather financial data for the prompt from the loaded JSON
+                const summary = financialData.summary;
+                const expensesData = financialData.expenseCategories;
+                const custodyDetails = financialData.custodyDetails;
+
+                // Construct a detailed prompt for the LLM
+                const prompt = `
+                بصفتك محللاً مالياً خبيراً، قم بتحليل التقرير المالي التالي لمشروع بريدة.
+                إجمالي العهد: ${summary.totalCustody.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س
+                إجمالي المصروفات: ${summary.totalExpenses.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س
+                المتبقي من الميزانية: ${summary.remainingBudget.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س
+                نسبة الصرف: ${summary.expensePercentage}%
+                نسبة المتبقي: ${summary.remainingPercentage}%
+                أكبر بند مصروفات: ${summary.largestExpense} بقيمة ${summary.largestExpenseAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س (${summary.largestExpensePercentage}% من إجمالي المصروفات).
+
+                تفاصيل بنود المصروفات الأخرى:
+                ${expensesData.map(item => `${item.name}: ${item.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س (${item.percentage}%)`).join('\n')}
+
+                تفاصيل العهد:
+                ${custodyDetails.map(item => `عهدة ${item.id} بتاريخ ${item.date}: ${item.value.toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س - ${item.description}`).join('\n')}
+
+                قدم تحليلاً شاملاً يتضمن:
+                1.  ملخصاً موجزاً للوضع المالي الحالي للمشروع.
+                2.  نقاط القوة والتحديات المالية الرئيسية.
+                3.  توصيات عملية لتحسين الأداء المالي وإدارة الميزانية بشكل أكثر فعالية، مع التركيز على بنود المصروفات الكبيرة أو التي يمكن تحسينها.
+                4.  توقعات موجزة للمستقبل بناءً على البيانات الحالية.
+                يرجى تقديم التحليل بتنسيق markdown واضح وموجز.
+                `;
+
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Leave as-is, Canvas will provide at runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        analysisContent.innerHTML = marked.parse(text); // Use marked.js to parse markdown
+                    } else {
+                        analysisContent.innerHTML = '<p class="text-red-600">عذرًا، لم أتمكن من توليد التحليل. يرجى المحاولة مرة أخرى.</p>';
+                        console.error('Gemini API response was unexpected:', result);
+                    }
+                } catch (error) {
+                    analysisContent.innerHTML = `<p class="text-red-600">حدث خطأ أثناء الاتصال بخدمة التحليل: ${error.message}</p>`;
+                    console.error('Error calling Gemini API:', error);
+                } finally {
+                    loadingIndicator.classList.add('hidden'); // Hide loading indicator
+                }
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>
